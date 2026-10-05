@@ -45,6 +45,16 @@ three.js is loaded from a CDN, so you need to be online.
 | R | Switch walking mode: free roam (walk where you look) / follow a fixed loop (centered on where you are) |
 | "⋯" at the top right | Instructions, credits, music on / off |
 | Esc | Close the instructions / credits card and the menu |
+| Box at the bottom left | Give an alpaca a name (an empty box + `Enter` just calls another alpaca) |
+
+## Shared alpaca names
+
+Visitors can name alpacas after whoever annoyed them today. The names are shared by everyone visiting and disappear 36 hours after they were added (at most 50 are kept, one per alpaca, so a flood of new names pushes the oldest out early). Sending a named alpaca away hides its name for that visitor only.
+
+- The names live in the Google Sheet "vibe-shepherding" (tab `names`: id, name, time added), reached through a small Apps Script web app bound to that sheet: `tools/names-apps-script.gs`, deployed with *Execute as: Me* and *Who has access: Anyone*. The page talks to it with a plain GET (the names) and a `text/plain` POST (add a name), so no CORS preflight is needed. The web app URL is at the top of `src/names.js`.
+- **Moderation:** delete a row in the `names` tab and the name disappears for everyone within about half a minute. Put a word in the `blocked` tab (one per row) and names containing it are refused. Links and a short list of slurs are always refused, and the script accepts at most 20 new names a minute across all visitors.
+- The sheet itself can stay private: the script runs as its owner, and the page only ever sees the web app URL.
+- After changing the script, redeploy it from *Deploy → Manage deployments → Edit → Version: New version* so the URL stays the same.
 
 ## The endless valley
 
@@ -106,6 +116,7 @@ All of these are static models without skeletons: the legs swing in the vertex s
 - `src/sky.js`: blue sky (a light band from zenith to horizon), the sun, clouds overhead
 - `src/bees.js`: bumblebees (flying between flowers near you and hovering over them)
 - `src/ui.js`: the "⋯" menu at the top right, the instructions and credits cards, and the "credit to @hyraland" line
+- `src/names.js`, `tools/names-apps-script.gs`: the shared alpaca names (the box at the bottom left, the labels above the alpacas, and the Apps Script behind them)
 - `src/audio.js`: sound (synthesized live with Web Audio, positioned in stereo)
 - `src/musicKuy.js`: background music (default) — a live-generated dombra küy: two strings tuned a fourth apart and strummed together, the melody on the upper string and an open-string drone or parallel fourths on the lower one; a galloping 2/4 pattern; D Mixolydian, with repeated motifs and sequences descending all the way back to the tonic; a bowed bass drone, with a hand drum usually joining from the second part; free-tempo intro → galloping section (theme A recurring, with B and C in between, parts linked by a bar of open-string gallop, getting a little faster) → slowing ending; each piece lasts 40–50 seconds, followed by a rest of a dozen seconds or so
 - `src/musicSong.js`: alternative background music (selectable in the dev panel) — a steppe tune: dombra in a 6/8 hoofbeat rhythm with a sybyzgy-style flute melody in folk-song form (A, A′, B, A′)

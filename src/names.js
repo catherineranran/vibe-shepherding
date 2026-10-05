@@ -1,13 +1,27 @@
 import * as THREE from 'three';
 
-// "Name an alpaca": a small box at the bottom left where visitors can give alpacas the names of people who annoyed
-// them today. Each name floats above its own alpaca. The names stay only in this browser (localStorage) and disappear
-// 36 hours after they were added; sending a named alpaca away (double-click) removes its name right away.
-// On a reload the saved names find new alpacas, and alpacas are called in if there aren't enough to carry them.
+// "Name an alpaca": a small box at the bottom left where visitors give alpacas the names of people who annoyed them
+// today. The names are shared by everyone visiting: they're kept in a Google Sheet, reached through a small Apps Script
+// web app (tools/names-apps-script.gs), and disappear 36 hours after they were added (or sooner, once 50 newer names
+// have come in: one name per alpaca). Each name floats above its own alpaca, and more alpacas are called in when there
+// aren't enough to carry them all. Sending a named alpaca away (double-click) hides that name for you only.
 
-const KEY = 'vibe-shepherding.names';
+const API = 'https://script.google.com/macros/s/AKfycbwh2lVFZ9dCXI7z0MqlUj4SqF4e9UaxAS0Q87GxWHmY9wHmw5MxTZE1BVm-_lIJ-9jEqA/exec';
+const HIDDEN_KEY = 'vibe-shepherding.hidden-names';
 const LIFETIME = 36 * 60 * 60 * 1000;
 const MAX_LEN = 24;
+const POLL = 20;            // seconds between refreshes while the page is open
+const MAX_POLL = 160;       // backing off to this while the sheet can't be reached
+const TRUST = 90 * 1000;    // a name added from this page stays up this long even if a refresh doesn't list it yet
+const SPAWNS_PER_STEP = 3;  // alpacas called in at a time (every half second) to carry names
+
+const MESSAGES = {
+  blocked: "that name can't be used, try another one",
+  busy: 'lots of names right now, try again in a minute',
+  full: 'the herd is full for now, try again later',
+  length: `names can be up to ${MAX_LEN} characters`,
+  network: "couldn't reach the meadow, try again",
+};
 
 const CSS = `
 #ym-namebox {
@@ -35,6 +49,7 @@ const CSS = `
 }
 #ym-namebox button:hover { background: #3a4d5f; }
 #ym-namebox .hint { font-size: 11.5px; color: #5b6b78; }
+#ym-namebox .hint.warn { color: #a8452b; }
 @media (max-width: 700px) {
   #ym-namebox { bottom: 34px; font-size: 12px; }   /* leave the credit line below free */
 }
@@ -50,77 +65,159 @@ const CSS = `
 }
 `;
 
-function load() {
+const cleanName = (s) => String(s ?? '').replace(/\s+/g, ' ').trim().slice(0, MAX_LEN);
+
+// names from the sheet, checked and trimmed: [{ id, name, t }]
+function fromServer(list) {
+  return (Array.isArray(list) ? list : [])
+    .map((n) => ({ id: String(n?.id ?? ''), name: cleanName(n?.name), t: Number(n?.t) }))
+    .filter((n) => n.id && n.name && n.t);
+}
+
+function loadHidden() {
   try {
     const now = Date.now();
-    const list = JSON.parse(localStorage.getItem(KEY)) || [];
-    return list.filter((n) => n && typeof n.name === 'string' && typeof n.t === 'number' && now - n.t < LIFETIME && n.t <= now + 60000);
+    const obj = JSON.parse(localStorage.getItem(HIDDEN_KEY)) || {};
+    return Object.fromEntries(Object.entries(obj).filter(([, t]) => typeof t === 'number' && now - t < LIFETIME));
   } catch {
-    return [];
+    return {};
   }
 }
 
-function save(list) {
-  try { localStorage.setItem(KEY, JSON.stringify(list)); } catch {}
+function saveHidden(hidden) {
+  try { localStorage.setItem(HIDDEN_KEY, JSON.stringify(hidden)); } catch {}
+}
+
+async function getNames() {
+  const res = await fetch(API, { cache: 'no-store' });
+  const data = await res.json();
+  if (!data?.ok) throw new Error('names: bad response');
+  return fromServer(data.names);
+}
+
+async function postName(name) {
+  try {
+    // text/plain keeps this a "simple" request, so the browser doesn't need a CORS preflight that Apps Script can't answer
+    const res = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ name }) });
+    return await res.json();
+  } catch {
+    return { ok: false, error: 'network' };
+  }
 }
 
 export function createNames({ flock, camera, addSheep, maxSheep }) {
-  let names = load();
-  save(names);
+  let server = [];              // names in the sheet, newest first
+  const mine = new Map();       // id → name added from this page (with `at`, when it was confirmed)
+  let pending = [];             // names on their way to the sheet
+  let hidden = loadHidden();    // id → time added, for names this visitor sent away
+  let names = [];               // what's shown: newest first, at most one per alpaca
+  saveHidden(hidden);
 
+  function rebuild() {
+    const now = Date.now();
+    const list = [...server];
+    for (const m of mine.values()) if (now - m.at < TRUST && !server.some((n) => n.id === m.id)) list.push(m);
+    list.sort((a, b) => b.t - a.t);
+    names = [...pending, ...list].filter((n) => !hidden[n.id] && now - n.t < LIFETIME).slice(0, maxSheep);
+  }
+
+  // —— the box ——
   const style = document.createElement('style');
   style.textContent = CSS;
   document.head.appendChild(style);
 
   const touchOnly = matchMedia('(hover: none) and (pointer: coarse)').matches;
+  const HINT = touchOnly ? 'tap the meadow to add more alpacas' : 'press enter to add more alpacas';
+  const PLACEHOLDER = 'a name (everyone can see it)';
   const box = document.createElement('div');
   box.id = 'ym-namebox';
   box.lang = 'en';
   box.innerHTML = `
     <p class="msg">feel free to add names of those who annoyed you today to alpacas (e.g., dear supervisors or subordinates), names will disappear in 36 hours</p>
     <form>
-      <input type="text" maxlength="${MAX_LEN}" placeholder="a name" aria-label="Name for an alpaca" autocomplete="off" spellcheck="false">
+      <input type="text" maxlength="${MAX_LEN}" placeholder="${PLACEHOLDER}" aria-label="Name for an alpaca" autocomplete="off" spellcheck="false" enterkeyhint="done">
       <button type="submit">add</button>
     </form>
-    <p class="hint">${touchOnly ? 'tap the meadow to add more alpacas' : 'press enter to add more alpacas'}</p>`;
+    <p class="hint" aria-live="polite">${HINT}</p>`;
   const layer = document.createElement('div');
   layer.id = 'ym-namelayer';
   document.body.append(layer, box);
 
+  const input = box.querySelector('input');
+  const hint = box.querySelector('.hint');
+  let sayTimer;
+  function say(msg) {
+    hint.textContent = msg;
+    hint.classList.add('warn');
+    clearTimeout(sayTimer);
+    sayTimer = setTimeout(() => { hint.textContent = HINT; hint.classList.remove('warn'); }, 4500);
+  }
+
   // clicks and taps on the box shouldn't reach the meadow
   box.addEventListener('pointerdown', (e) => e.stopPropagation());
-  const input = box.querySelector('input');
   input.addEventListener('keydown', (e) => { if (e.key === 'Escape') input.blur(); });
-  let placeholderTimer;
-  box.querySelector('form').addEventListener('submit', (e) => {
+
+  let tmpN = 0, seq = 0, applied = 0;
+  box.querySelector('form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const name = input.value.replace(/\s+/g, ' ').trim().slice(0, MAX_LEN);
-    if (!name) return;
-    if (names.length >= maxSheep) {
-      input.value = '';
-      input.placeholder = 'the herd is full for now';
-      clearTimeout(placeholderTimer);
-      placeholderTimer = setTimeout(() => { input.placeholder = 'a name'; }, 3000);
-      return;
-    }
-    names.push({ id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, name, t: Date.now() });
-    save(names);
+    const name = cleanName(input.value);
+    if (!name) { addSheep(); return; }   // an empty box: Enter just calls another alpaca
     input.value = '';
+    const tmp = { id: `tmp${++tmpN}`, name, t: Date.now() };
+    pending.unshift(tmp);   // show it straight away; the sheet confirms it a second or two later
+    rebuild();
+    assign();
+
+    const res = await postName(name);
+    pending = pending.filter((p) => p !== tmp);
+    if (res?.ok && res.id) {
+      const id = String(res.id);
+      const entry = fromServer(res.names).find((n) => n.id === id) || { id, name, t: Date.now() };
+      mine.set(id, { ...entry, at: Date.now() });
+      for (const s of flock.list) if (s.nameId === tmp.id) s.nameId = id;   // the same alpaca keeps the name
+      if (hidden[tmp.id]) { hidden[id] = entry.t; saveHidden(hidden); }
+      if (Array.isArray(res.names)) { server = fromServer(res.names); applied = ++seq; }
+    } else {
+      say(MESSAGES[res?.error] || MESSAGES.network);
+      if (res?.error !== 'blocked' && !input.value) input.value = name;
+    }
+    rebuild();
     assign();
   });
 
+  // —— keeping up with everyone else's names ——
+  let inflight = false, pollT = 0, interval = POLL;
+  async function refresh() {
+    inflight = true;
+    const my = ++seq;
+    try {
+      const list = await getNames();
+      if (my > applied) { applied = my; server = list; rebuild(); assign(); }
+      interval = POLL;
+    } catch {
+      interval = Math.min(MAX_POLL, interval * 2);
+    } finally {
+      inflight = false;
+      pollT = interval;
+    }
+  }
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') pollT = 0; });
+
+  // —— alpacas ——
   const v = new THREE.Vector3();
   const live = (s) => s.state !== 'leave';
 
-  // Give every saved name an alpaca: preferably an unnamed one in view and close by, otherwise call a new one in.
+  // Give every name an alpaca: preferably an unnamed one in view and close by, otherwise call a new one in.
   function assign() {
-    const ids = new Set(names.map((n) => n.id));
+    const byId = new Map(names.map((n) => [n.id, n]));
     const carried = new Set();
     for (const s of flock.list) {
       if (!s.nameId) continue;
-      if (!ids.has(s.nameId)) { s.nameId = null; s.name = null; } else if (live(s)) carried.add(s.nameId);
+      const n = byId.get(s.nameId);
+      if (!n) { s.nameId = null; s.name = null; } else if (live(s)) { carried.add(s.nameId); s.name = n.name; }
     }
     camera.updateMatrixWorld();
+    let spawns = SPAWNS_PER_STEP;
     for (const n of names) {
       if (carried.has(n.id)) continue;
       let best = null, bd = Infinity;
@@ -131,33 +228,34 @@ export function createNames({ flock, camera, addSheep, maxSheep }) {
         const d = s.root.position.distanceTo(camera.position) + (inView ? 0 : 1000);
         if (d < bd) { bd = d; best = s; }
       }
-      if (!best) best = addSheep();
-      if (!best) break;   // the herd is at its limit, or there's no room to call one in right now
+      if (!best && spawns-- > 0) best = addSheep();
+      if (!best) break;   // the herd is at its limit or there's no room right now: the rest wait for the next round
       best.nameId = n.id;
       best.name = n.name;
       carried.add(n.id);
     }
   }
 
-  let assignT = 0, expireT = 0;
+  let assignT = 0, expireT = 30;
   const els = new Map();   // alpaca → its label
   function update(dt) {
-    // a named alpaca that's been sent away takes its name with it
+    // a named alpaca that's been sent away takes its name with it (for this visitor)
     let changed = false;
     for (const s of flock.list) {
       if (s.nameId && !live(s)) {
-        names = names.filter((n) => n.id !== s.nameId);
+        hidden[s.nameId] = names.find((n) => n.id === s.nameId)?.t ?? Date.now();
         s.nameId = null;   // the label stays (s.name) and fades out as the alpaca leaves
         changed = true;
       }
     }
-    if ((expireT -= dt) <= 0) {
+    if ((expireT -= dt) <= 0) {   // names past 36 hours go, and so do the hidden ones
       expireT = 30;
-      const now = Date.now(), before = names.length;
-      names = names.filter((n) => now - n.t < LIFETIME);
-      if (names.length !== before) changed = true;
+      const now = Date.now();
+      hidden = Object.fromEntries(Object.entries(hidden).filter(([, t]) => now - t < LIFETIME));
+      changed = true;
     }
-    if (changed) save(names);
+    if (changed) { saveHidden(hidden); rebuild(); }
+    if (!inflight && document.visibilityState === 'visible' && (pollT -= dt) <= 0) refresh();
     if ((assignT -= dt) <= 0 || changed) { assignT = 0.5; assign(); }
 
     camera.updateMatrixWorld();
