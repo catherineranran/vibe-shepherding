@@ -76,8 +76,8 @@ const HELP = (max) => `
 <h2>How to play</h2>
 <table>
   <tr><td>Look around</td><td>Drag the view, or <span class="keys"><kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd></span></td></tr>
-  <tr><td>Call a sheep</td><td>Click or tap the field, or press <span class="keys"><kbd>+</kbd> / <kbd>Enter</kbd></span> (up to ${max})</td></tr>
-  <tr><td>Send a sheep away</td><td>Double-click or double-tap it, or press <span class="keys"><kbd>−</kbd> / <kbd>Backspace</kbd></span></td></tr>
+  <tr><td>Call an alpaca</td><td>Click or tap the field, or press <span class="keys"><kbd>+</kbd> / <kbd>Enter</kbd></span> (up to ${max})</td></tr>
+  <tr><td>Send an alpaca away</td><td>Double-click or double-tap it, or press <span class="keys"><kbd>−</kbd> / <kbd>Backspace</kbd></span></td></tr>
   <tr><td>Stop / keep walking</td><td><kbd>Space</kbd></td></tr>
   <tr><td>Change how you walk</td><td><kbd>R</kbd>: walk wherever you look ↔ follow a fixed loop</td></tr>
 </table>
@@ -89,16 +89,19 @@ const CREDITS = `
 <h3>Original</h3>
 <p><i>Herding Sheep on the Ili Grassland</i> by Hyraland —
 <a href="https://github.com/hyraland/shepherd" target="_blank" rel="noopener">hyraland/shepherd</a> (MIT License).
-This is a clone of it. The original's realistic sheep model can't be copied under its license, so the sheep here are generated in code.</p>
-<h3>Sheep sounds</h3>
+This is a clone of it, with alpacas instead of sheep.</p>
+<h3>Alpacas</h3>
+<p>“Alpaca Animal” by Nyilonelycompany —
+<a href="https://www.cgtrader.com/3d-models/animal/mammal/alpaca-animal" target="_blank" rel="noopener">CGTrader</a> (Royalty Free License), recoloured</p>
+<h3>Sounds</h3>
 <p>Sheep sounds from “Yo Frankie!” © Blender Foundation —
 <a href="https://opengameart.org/content/sheep-sound-bleats-yo-frankie" target="_blank" rel="noopener">OpenGameArt</a>,
-<a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC BY 3.0</a> (pitch shifted to suit each sheep's size)</p>
+<a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC BY 3.0</a> (pitch shifted to suit each animal's size)</p>
 <p>“Sheep Baa” by AntumDeluge, from a recording by mikewest —
 <a href="https://opengameart.org/node/132779" target="_blank" rel="noopener">OpenGameArt</a>, CC0</p>
 <h3>Rendering</h3>
 <p><a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> (MIT License)</p>
-<p class="note">The sheep, grass, wildflowers, spruces, stream and lake, sky and bumblebees — and the wind, water, buzzing, skylarks and music — are all generated live in your browser.</p>
+<p class="note">The grass, wildflowers, spruces, stream and lake, sky and bumblebees — and the wind, water, buzzing, skylarks and music — are all generated live in your browser.</p>
 `;
 
 export function createMenu({ sound, maxSheep, right = 14 }) {

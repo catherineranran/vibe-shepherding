@@ -5,12 +5,22 @@
 This repository is a clone of [hyraland/shepherd](https://github.com/hyraland/shepherd) (*Herding Sheep on the Ili Grassland*, MIT License, © 2026 CocoNana).
 The commit history is kept as it was, except that `assets/sheep.pack` was removed (see the CGTrader section below).
 
+## Alpacas: CGTrader Royalty Free License (`assets/alpaca.pack`)
+
+- "Alpaca Animal" by Nyilonelycompany — https://www.cgtrader.com/3d-models/animal/mammal/alpaca-animal (bought by the site owner).
+- License: **CGTrader Royalty Free License**. The model may be used in this site but **its files may not be redistributed**, so the repository only holds an
+  encrypted package: `tools/prepare-alpaca.mjs` bakes three static poses from the model's skeleton (standing, head low, eating), recolours the fur
+  to white, drops the skin, animations and unused maps, shrinks the texture to 2K and encrypts the result with AES-256-GCM into `assets/alpaca.pack`
+  (key in `src/alpacaKey.js`); the page decrypts it with WebCrypto and loads it in memory. The original `Alpaca_2.glb` stays in `models/alpaca/`,
+  which is git-ignored.
+- Each alpaca gets a coat colour at runtime: about four in five are white variants, one in five a pale colour from a 72-colour macaron palette.
+
 ## Sheep: procedural (`src/sheepProcedural.js`)
 
-This clone's default sheep is generated entirely in code: the body, the wool "trousers" and the tuft on the head are all made of wool puffs,
+An alternative look in the dev version, generated entirely in code: the body, the wool "trousers" and the tuft on the head are all made of wool puffs,
 and the wool texture is painted at runtime. It is MIT-licensed along with the rest of the source code.
 
-## Sketchfab, CC BY 4.0 (commercial use allowed, attribution required): optional sheep 3 and 4 in the dev version
+## Sketchfab, CC BY 4.0 (commercial use allowed, attribution required): optional sheep 4 and 5 in the dev version
 
 The release version doesn't load these two models. If they're ever used, the following attribution must be shown somewhere visible on the page.
 

@@ -26,6 +26,20 @@ vec3 neckBend(vec3 p, inout vec3 nrm, vec2 head, vec3 pivot, vec4 neck) {
 }
 `;
 
+// Models with baked poses (the alpaca): blend standing → mid → grazing pose by g (0..1), positions and normals.
+// A three-key blend keeps the long neck from shrinking half-way, as a straight two-pose blend would.
+export const GRAZE_GLSL = /* glsl */ `
+attribute vec3 aMidPos;
+attribute vec3 aMidNrm;
+attribute vec3 aEatPos;
+attribute vec3 aEatNrm;
+vec3 grazePose(vec3 p0, inout vec3 nrm, float g) {
+  float a = clamp(g * 2.0, 0.0, 1.0), b = clamp(g * 2.0 - 1.0, 0.0, 1.0);
+  nrm = normalize(mix(mix(nrm, aMidNrm, a), aEatNrm, b));
+  return mix(mix(p0, aMidPos, a), aEatPos, b);
+}
+`;
+
 const vert = /* glsl */ `
 #ifdef GAIT
 attribute vec2 aGait;
@@ -37,30 +51,42 @@ uniform vec3 uPivot;
 uniform vec4 uNeck;
 ${NECK_GLSL}
 #endif
+#ifdef GRAZE
+${GRAZE_GLSL}
+#endif
 varying vec2 vUv;
 varying vec3 vN;
 varying vec3 vWorld;
-varying float vTint;
+varying vec3 vTint;
 
 void main() {
   vec3 p = position;
   vec3 nrm = normal;
+#ifdef GRAZE
+  // grazing pose first (aHead.x = how far into grazing); the legs below still swing as in the standing pose
+  p = grazePose(p, nrm, aHead.x);
+#endif
 #ifdef GAIT
   {
-    // 腿的摆动：髋部以下绕髋部高度的横轴转动，对角线两条腿同相
-    float w = smoothstep(uHip, uHip - 0.12, p.y);
+    // 腿的摆动：髋部以下绕髋部高度的横轴转动，对角线两条腿同相（按站立姿势的位置算）
+    vec3 q = position;
+    float w = smoothstep(uHip, uHip - 0.12, q.y);
     if (w > 0.0 && aGait.y > 0.0) {
-      bool front = p.z > 0.0;
-      bool left = p.x > 0.0;
+      bool front = q.z > 0.0;
+      bool left = q.x > 0.0;
       float a = sin(aGait.x + (front == left ? 0.0 : 3.14159)) * aGait.y * w;
-      float dy = p.y - uHip;
-      p.y = uHip + dy * cos(a);
+      float dy = q.y - uHip;
+      p.y += uHip + dy * cos(a) - q.y;
       p.z += dy * sin(a);
     }
   }
 #endif
 #ifdef NECK
+#ifdef GRAZE
+  p = neckBend(p, nrm, vec2(0.0, aHead.y), uPivot, uNeck);   // grazing is the baked pose; the neck only turns
+#else
   p = neckBend(p, nrm, aHead, uPivot, uNeck);
+#endif
 #endif
   mat4 im = mat4(1.0);
 #ifdef USE_INSTANCING
@@ -71,9 +97,9 @@ void main() {
   vUv = uv;
   vWorld = wp.xyz;
 #ifdef USE_INSTANCING_COLOR
-  vTint = instanceColor.r;
+  vTint = instanceColor;   // per-animal coat colour (grey for plain brightness variation)
 #else
-  vTint = 1.0;
+  vTint = vec3(1.0);
 #endif
   gl_Position = projectionMatrix * viewMatrix * wp;
 }
@@ -96,7 +122,7 @@ uniform sampler2D map;
 varying vec2 vUv;
 varying vec3 vN;
 varying vec3 vWorld;
-varying float vTint;
+varying vec3 vTint;
 
 // 白羊毛的贴图大约是这个亮度；除掉它，亮面颜色就是“阳光下白羊毛看起来的颜色”
 const float WOOL_GAIN = 1.35;
@@ -147,8 +173,9 @@ void main() {
 }
 `;
 
-export function makeSheepMaterial({ map, color, side, hip, neck }) {
+export function makeSheepMaterial({ map, color, side, hip, neck, graze }) {
   const defines = {};
+  if (graze) defines.GRAZE = '';
   if (map) defines.HAS_MAP = '';
   if (hip != null) defines.GAIT = '';
   if (neck) defines.NECK = '';

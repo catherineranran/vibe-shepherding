@@ -117,6 +117,7 @@ export class Flock {
     const spread = this.spread;
     const { cx, cz, fx, fz, cam } = ctx;
     const rx = -fz, rz = fx;
+    const K = this.look.def?.spacing ?? 1;   // bigger animals (alpacas) need more room
 
     for (let i = 0; i < L.length; i++) {
       const s = L[i];
@@ -130,7 +131,7 @@ export class Flock {
         const d2 = dx * dx + dz * dz;
         if (d2 > 64) continue;
         const d = Math.sqrt(d2) + 1e-4;
-        const R = 0.62 * (s.scale + o.scale) + 0.15;
+        const R = (0.62 * (s.scale + o.scale) + 0.15) * K;
         if (d < R) { const w = 1 - d / R; sepX += (dx / d) * w; sepZ += (dz / d) * w; }
         if (o.state === 'leave' || s.state === 'leave') continue;
         if (d < 5) { aliX += o.vx; aliZ += o.vz; aliN++; if (o.mode === 'walk') walkN++; }
@@ -247,12 +248,12 @@ export class Flock {
       // 给走过来的人让路
       {
         const dx = s.x - cam.x, dz = s.z - cam.z, d = Math.hypot(dx, dz) + 1e-4;
-        if (d < 1.7) { const k = (1.7 - d) * 2.6; dvx += (dx / d) * k; dvz += (dz / d) * k; }
+        if (d < 1.7 * K) { const k = (1.7 * K - d) * 2.6; dvx += (dx / d) * k; dvz += (dz / d) * k; }
       }
       // 吃草时不站在溪水里；赶路时直接蹚过小溪跟上人
       if (s.state === 'flock' && (s.mode === 'graze' || s.mode === 'nibble')) {
         const ri = riverInfo(s.x, s.z);
-        const R = 0.9 * s.scale + 0.4;
+        const R = (0.9 * s.scale + 0.4) * K;
         if (ri.d < R) { const k = (R - ri.d) * 3.5; dvx += ri.ax * k; dvz += ri.az * k; }
       }
       for (const ob of this.obstacles) {
@@ -287,7 +288,7 @@ export class Flock {
       if (s.state !== 'leave') continue;
       const dist = Math.hypot(s.x - cam.x, s.z - cam.z);
       this._sphere.center.set(s.x, s.root.position.y + 0.5, s.z);
-      this._sphere.radius = 1.2 * s.scale;
+      this._sphere.radius = 1.2 * s.scale * (this.look.def?.spacing ?? 1);
       const visible = ctx.frustum.intersectsSphere(this._sphere);
       if (s.life > 11) s.shrink -= dt * 1.4;
       if ((!visible && dist > 9) || s.shrink <= 0) this._discard(i);

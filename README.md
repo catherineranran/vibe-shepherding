@@ -1,10 +1,16 @@
-# Herding Sheep on the Ili Grassland
+# Herding Alpacas on the Ili Grassland
 Made by Claude Opus 5.5.
 
 > **vibe-shepherding** is a clone of [hyraland/shepherd](https://github.com/hyraland/shepherd) (MIT), live at **https://ranranli.net/vibe-shepherding/**.
-> Differences from the original: the realistic sheep is a CGTrader model licensed to the original author only, so it isn't included here;
-> the sheep in this copy are generated in code (`src/sheepProcedural.js`). To use the original model, see [CREDITS.md](CREDITS.md).
-> All on-screen text is in English, and a small "credit to @hyraland" line sits at the bottom of the page.
+> Differences from the original:
+> - The herd is **alpacas** instead of sheep: the CGTrader model "Alpaca Animal" by Nyilonelycompany, recoloured so that about four in five are
+>   white or near-white (ivory, cream, oatmeal…) and one in five wears a pale macaron colour. It ships encrypted in `assets/alpaca.pack`
+>   (built by `tools/prepare-alpaca.mjs`, see [CREDITS.md](CREDITS.md)). The alpacas still use the original's sheep bleats.
+> - The original's realistic sheep (a CGTrader model licensed to the original author only) isn't included; a procedural sheep
+>   (`src/sheepProcedural.js`) remains as an alternative look in the dev version.
+> - All on-screen text is in English, and a small "credit to @hyraland" line sits at the bottom of the page.
+>
+> The description below is the original's, so it talks about sheep.
 
 A first-person sheep-herding scene built with three.js: an endless east–west river valley with meadows and a winding stream on the valley floor,
 spruce-covered slopes on both sides, and snow mountains on the eastern horizon. Looking toward the sun, the stream flows down to a low lake far downstream,
@@ -24,7 +30,7 @@ python3 serve.py
 ```
 
 - **Release** http://localhost:8000/
-- **Dev** http://localhost:8000/dev.html: adds a look-tuning panel (G to show/hide; changes are written back to `tuning.json`), number keys 1–4 / M to switch sheep models, and `window.__yili` in the console. The "⋯" menu moves to the left of the panel.
+- **Dev** http://localhost:8000/dev.html: adds a look-tuning panel (G to show/hide; changes are written back to `tuning.json`), number keys 1–5 / M to switch models, and `window.__yili` in the console. The "⋯" menu moves to the left of the panel.
 
 three.js is loaded from a CDN, so you need to be online.
 
@@ -32,8 +38,8 @@ three.js is loaded from a CDN, so you need to be online.
 
 | Input | What it does |
 | --- | --- |
-| Click / `+` / `Enter` | Call a sheep (up to 50) |
-| Double-click / `−` / `Backspace` | Send a sheep away |
+| Click / `+` / `Enter` | Call an alpaca (up to 50) |
+| Double-click / `−` / `Backspace` | Send an alpaca away |
 | Drag / arrow keys | Look around; by default you walk where you're looking and the flock follows |
 | Space | Stop / keep walking |
 | R | Switch walking mode: free roam (walk where you look) / follow a fixed loop (centered on where you are) |
@@ -68,16 +74,17 @@ At the bottom of the panel are **presets**: pick one, then click "Apply this pre
 
 ## Dev: comparing sheep models
 
-- In the main scene, press number keys **1–4** to switch models, or **M** to cycle through them; you can also use `?sheep=woolly|cgtrader|dibarts|cartoon`.
+- In the main scene, press number keys **1–5** to switch models, or **M** to cycle through them; you can also use `?sheep=alpaca|woolly|cgtrader|dibarts|cartoon`.
   The choice is remembered in the browser, and the current model's name briefly appears at the bottom left when you switch.
 - `compare.html`: the models stand side by side under the same lighting; switch between graze / look up / walk / trot.
 
 | Key | Model | Notes |
 | --- | --- | --- |
-| 1 | Woolly sheep (procedural) | This clone's default sheep: a body of wool puffs, wool "trousers", drooping ears; code in `src/sheepProcedural.js` |
-| 2 | Realistic Sheep · WildMesh3D (CGTrader) | The original's model, not included in this clone (see CREDITS.md). Realistic textures; the head nods / turns on its own |
-| 3 | Sheep · DibArts | Low-poly (put the model in `models/` yourself) |
-| 4 | Cartoon sheep · _Yen_ | Cartoon, high-poly; the head nods / turns on its own (put the model in `models/` yourself) |
+| 1 | Alpaca · Nyilonelycompany (CGTrader) | This clone's herd. Grazing blends to poses baked from the model's own skeleton (standing → head low → eating); white / macaron coats per animal |
+| 2 | Woolly sheep (procedural) | A body of wool puffs, wool "trousers", drooping ears; code in `src/sheepProcedural.js` |
+| 3 | Realistic Sheep · WildMesh3D (CGTrader) | The original's model, not included in this clone (see CREDITS.md). Realistic textures; the head nods / turns on its own |
+| 4 | Sheep · DibArts | Low-poly (put the model in `models/` yourself) |
+| 5 | Cartoon sheep · _Yen_ | Cartoon, high-poly; the head nods / turns on its own (put the model in `models/` yourself) |
 
 All of these are static models without skeletons: the legs swing in the vertex shader in step with the gait (diagonal legs in phase), and the body sways when walking and leans forward when grazing.
 
@@ -87,9 +94,10 @@ All of these are static models without skeletons: the legs swing in the vertex s
 - `src/walker.js`: first-person walking (walk where you look / follow a fixed loop) and the camera
 - `src/flock.js`: flock behavior (gathering in front of you; grazing / travelling, following the herd, separation / alignment / cohesion; while travelling some sheep stop for a few bites, fall behind and trot to catch up, so the flock slowly churns)
 - `src/sheep.js`: the sheep "rig" (posed by the flock logic) and contact shadows
-- `src/sheepProcedural.js`: the procedural sheep (this clone's default look)
+- `src/sheepProcedural.js`: the procedural sheep (an alternative look in the dev version)
+- `tools/prepare-alpaca.mjs`, `src/alpacaKey.js`, `assets/alpaca.pack`: the alpaca — poses baked from its skeleton, fur recoloured to white, packed and encrypted
 - `src/sheepPack.js`, `src/sheepKey.js`, `tools/pack-sheep.mjs`: encrypted packing and decrypting loader for the sheep model
-- `src/sheepModels.js`: loading external glTF models, normalizing them, leg swing and head turning (when the head dips or turns, the neck stretches and bends by weight, so head and body never come apart)
+- `src/sheepModels.js`: the herd's looks and the alpacas' coat colours; loading external glTF models, normalizing them, leg swing and head turning (when the head dips or turns, the neck stretches and bends by weight, so head and body never come apart)
 - `src/grass.js`: two layers of short grass that follow the camera (grows in tufts; the two layers alternate blade by blade with no visible seam; gusts of wind roll through and bent grass catches the light; cloud shadows and sun shadows; no grass in the stream)
 - `src/scenery.js`: Schrenk's spruces (procedural: slender columnar crowns; tiers of drooping branches built from crossed "branch cards" whose texture of needled twigs with ragged, light-leaking edges is painted at runtime; the whole crown is lit as one; every tree differs in height, girth and lean; replaced by a simpler version beyond 450 m; lit / shadow colors are tuned under "Spruce forest" in the panel)
 - `src/terrain.js`: valley terrain and shading (forest floor; the stream's rippling reflections and sun glitter — dense fine sparkles plus a soft glow in the reflection zone, turning gold along the far light path toward the sun; natural wet banks; distant wildflowers; snow in the gullies), chunk meshes, the horizon ring, the lake downstream
@@ -110,4 +118,4 @@ All of these are static models without skeletons: the legs swing in the vertex s
 
 ## License
 
-The source code is MIT-licensed (see [LICENSE](LICENSE)). The sheep model (`assets/sheep.pack`, not included in this clone) and the sheep sounds (`assets/sounds/`) aren't covered by the MIT license; see [CREDITS.md](CREDITS.md) for their terms.
+The source code is MIT-licensed (see [LICENSE](LICENSE)). The alpaca model (`assets/alpaca.pack`), the sheep model (`assets/sheep.pack`, not included in this clone) and the sheep sounds (`assets/sounds/`) aren't covered by the MIT license; see [CREDITS.md](CREDITS.md) for their terms.

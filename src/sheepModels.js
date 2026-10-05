@@ -2,22 +2,60 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { SHEEP_CAPACITY } from './sheep.js';
 import { withClouds } from './materials.js';
-import { makeSheepMaterial, sheepToonEnabled, NECK_GLSL } from './sheepShader.js';
+import { makeSheepMaterial, sheepToonEnabled, NECK_GLSL, GRAZE_GLSL } from './sheepShader.js';
 import { loadPackedGLTF } from './sheepPack.js';
 import { buildProceduralSheep } from './sheepProcedural.js';
+import { ALPACA_KEY } from './alpacaKey.js';
 
-// 几种小羊外观（正式版只用 1 号；授权见 CREDITS.md）。
-// 1 号是这个克隆版程序生成的小羊；2 号是原作用的 CGTrader 模型（版税授权，克隆里不带 assets/sheep.pack，
-// 自己下载授权后用 tools/pack-sheep.mjs 打包就能用）；3、4 号需要自己把模型放进 models/。
-// 都是不带骨骼的静态模型：腿在顶点着色器里按步伐摆动，头部（分开的部件）绕脖子转动。
-//   build     代码生成模型（代替 url / pack）
+// The herd's possible looks (the release version uses only the first; licences in CREDITS.md).
+// 1 is the alpaca (CGTrader "Alpaca Animal", packed and encrypted by tools/prepare-alpaca.mjs); 2 is this clone's
+// procedural sheep; 3 is the original's CGTrader sheep (not included: assets/sheep.pack); 4 and 5 need models in models/.
+// All are static meshes: legs swing in the vertex shader in step with the gait, and the head turns around the neck.
+//   build     code-generated model (instead of url / pack)
+//   key       decryption key for `pack` (default: the sheep key)
+//   graze     the model carries baked mid / grazing poses (aMidPos, aEatPos …): grazing blends to them instead of nodding
+//   neck      explicit neck (model's own units, before normalising): pivot [y, z], z / y ramps where the neck starts to turn
+//   spacing   how much room each animal takes in the herd (multiplier, default 1)
+//   coats     per-animal coat colours: a function returning a THREE.Color (default: plain brightness variation)
 //   nod       低头吃草时头低下去的幅度（倍数，默认 1）
 //   height    归一化后的总高度（米，乘上每只羊的体型系数）
 //   headNode  用来判断头朝哪边的部件
 //   headParts 能单独点头 / 转头的部件（名字前缀，含子孙）
 //   hip       腿的上端（占总高度的比例），以下的部分会随步伐前后摆
 //   wool      用羊毛材质的部件（按材质名）：绒面光泽 + 用颜色贴图本身做凹凸，一卷卷的毛有起伏
+// Alpaca coats: about 80% white variants and 20% macaron pastels (the clearly coloured swatches of a 72-colour palette).
+const WHITE_COATS = [['#ffffff', 3], ['#fff8ee', 2], ['#fbf0df', 2], ['#f3f5fa', 1], ['#f1e6d6', 1], ['#e9e7e4', 1]];
+const MACARON_COATS = [
+  '#bdc4e2', '#efcdd5', '#ecc8d8', '#f8cac3', '#f7c3bd', '#f8d8c4', '#f8ddb6', '#fcd8b2', '#fee3db', '#fce9c0', '#f0dece',
+  '#f3d3c9', '#f0cdc3', '#f0d5c5', '#e8d9ba', '#f5fea4', '#fffed0', '#f4da98', '#f4c8a0', '#f5b89e', '#f4a5cf', '#f8c1d5',
+  '#f2a6c2', '#f7cfea', '#f5c3b4', '#f2c7c3', '#9ed8dc', '#9dcee9', '#81d7ee', '#f6b5e0', '#dea8d5', '#6be5d8', '#b0d5c9',
+  '#a2dfd6', '#a1dbbc', '#b7c581', '#e4be67', '#cebe6f', '#dbd7b4', '#d8f9bf', '#fdf7c3', '#efbae7', '#b9e3d3', '#e5eacc',
+  '#d1fae8', '#d4f7fd', '#f1dfc7', '#e9cac1', '#cfe2f9', '#bdd7f3', '#a6cad1', '#9cc5e1', '#aed3f3', '#bee8f4',
+];
+export const MACARON_SHARE = 0.2;
+const WHITE = new THREE.Color(1, 1, 1);
+// Coats are drawn from a shuffled bag of five (one macaron, four white), so any stretch of the herd keeps the 1-in-5 mix.
+let coatBag = [];
+function alpacaCoat() {
+  if (!coatBag.length) {
+    const n = Math.round(1 / MACARON_SHARE);
+    coatBag = Array.from({ length: n }, (_, i) => i === 0);
+    for (let i = n - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [coatBag[i], coatBag[j]] = [coatBag[j], coatBag[i]]; }
+  }
+  // the shading brightens and saturates fur, so the swatches go 30% of the way to white to stay macaron-pale on screen
+  if (coatBag.pop()) return new THREE.Color(MACARON_COATS[Math.floor(Math.random() * MACARON_COATS.length)]).lerp(WHITE, 0.3);
+  let r = Math.random() * WHITE_COATS.reduce((s, [, w]) => s + w, 0);
+  for (const [hex, w] of WHITE_COATS) if ((r -= w) <= 0) return new THREE.Color(hex);
+  return new THREE.Color('#ffffff');
+}
+
 export const SHEEP_LOOKS = [
+  {
+    id: 'alpaca', label: 'Alpaca · Nyilonelycompany (CGTrader)',
+    pack: 'assets/alpaca.pack', key: ALPACA_KEY, height: 1.75, hip: 0.29, wool: ['fur'],
+    graze: true, spacing: 1.35, coats: alpacaCoat,
+    neck: { pivot: [2.62, 1.3], z: [0.95, 1.3], y: [2.3, 2.85] },
+  },
   {
     id: 'woolly', label: 'Woolly sheep (procedural)',
     build: buildProceduralSheep, height: 1.0, headNode: 'head',
@@ -112,7 +150,7 @@ const inGroup = (o, names) => {
 
 // 写实材质也要和插画材质一样动：腿按步伐摆（髋部以下的顶点绕髋部高度的横轴转动，对角线两条腿同相），
 // 脖子按权重弯曲（见 sheepShader.js 的 neckBend）
-function withRig(material, hipY, neck) {
+function withRig(material, hipY, neck, graze) {
   material.onBeforeCompile = (sh) => {
     let head = '';
     if (hipY != null) head += 'attribute vec2 aGait;\n';
@@ -121,41 +159,55 @@ function withRig(material, hipY, neck) {
       sh.uniforms.uNeck = { value: neck.range };
       head += 'attribute vec2 aHead;\nuniform vec3 uPivot;\nuniform vec4 uNeck;\n' + NECK_GLSL;
     }
+    if (graze) head += GRAZE_GLSL;
     sh.vertexShader = head + sh.vertexShader
       // 法线在位置之前就算了：在这里一起把脖子弯好，位置留到 begin_vertex 再用
       .replace('#include <beginnormal_vertex>', `#include <beginnormal_vertex>
       vec3 rigPos = position;
-      ${neck ? 'rigPos = neckBend(position, objectNormal, aHead, uPivot, uNeck);' : ''}`)
+      ${graze ? 'rigPos = grazePose(position, objectNormal, aHead.x);' : ''}
+      ${neck ? `rigPos = neckBend(rigPos, objectNormal, ${graze ? 'vec2(0.0, aHead.y)' : 'aHead'}, uPivot, uNeck);` : ''}`)
       .replace('#include <begin_vertex>', `#include <begin_vertex>
       transformed = rigPos;
       ${hipY != null ? `{
         float hip = ${(hipY ?? 0).toFixed(4)};
-        float w = smoothstep(hip, hip - 0.12, transformed.y);
+        vec3 q = ${graze ? 'position' : 'transformed'};   // legs swing as in the standing pose
+        float w = smoothstep(hip, hip - 0.12, q.y);
         if (w > 0.0 && aGait.y > 0.0) {
-          bool front = transformed.z > 0.0;
-          bool left = transformed.x > 0.0;
+          bool front = q.z > 0.0;
+          bool left = q.x > 0.0;
           float a = sin(aGait.x + (front == left ? 0.0 : 3.14159)) * aGait.y * w;
-          float dy = transformed.y - hip;
-          transformed.y = hip + dy * cos(a);
+          float dy = q.y - hip;
+          transformed.y += hip + dy * cos(a) - q.y;
           transformed.z += dy * sin(a);
         }
       }` : ''}`);
   };
-  material.customProgramCacheKey = () => `rig${hipY ?? '-'}|${neck ? 'neck' : ''}`;
+  material.customProgramCacheKey = () => `rig${hipY ?? '-'}|${neck ? 'neck' : ''}|${graze ? 'graze' : ''}`;
   return material;
 }
 
 async function buildTemplate(def) {
   const gltf = def.build ? { scene: def.build() }
-    : def.pack ? await loadPackedGLTF(def.pack) : await loader.loadAsync(def.url);
+    : def.pack ? await loadPackedGLTF(def.pack, def.key) : await loader.loadAsync(def.url);
   applySpecGlossColors(gltf);
   const head = def.headNode ? gltf.scene.getObjectByName(def.headNode) : null;
   const outer = normalize(gltf.scene, head, def.height);
   const parts = [];
   const headBox = new THREE.Box3();
+  let meshMatrix = null;
   outer.traverse((o) => {
     if (!o.isMesh) return;
+    meshMatrix ??= o.matrixWorld.clone();
     const geo = o.geometry.clone().applyMatrix4(o.matrixWorld);
+    // baked poses (custom glTF attributes) go through the same normalising transform, under shader-friendly names
+    const nm = new THREE.Matrix3().getNormalMatrix(o.matrixWorld);
+    for (const [src, dst, isNormal] of [['_mid_position', 'aMidPos'], ['_mid_normal', 'aMidNrm', true], ['_eat_position', 'aEatPos'], ['_eat_normal', 'aEatNrm', true]]) {
+      const at = geo.getAttribute(src);
+      if (!at) continue;
+      if (isNormal) at.applyNormalMatrix(nm); else at.applyMatrix4(o.matrixWorld);   // applyNormalMatrix also re-normalises
+      geo.deleteAttribute(src);
+      geo.setAttribute(dst, at);
+    }
     if (o.matrixWorld.determinant() < 0) {
       // 镜像变换会把三角形翻面
       const idx = geo.index;
@@ -180,11 +232,17 @@ async function buildTemplate(def) {
   // 脖子弯曲的范围（模型坐标）：沿前后方向从肩膀后面到脸，沿高度从胸口以上；
   // 头部件和身体用同一个权重，接缝两边的顶点动得一样，就不会裂开
   const H = def.height;
-  const neck = headBox.isEmpty() ? null : {
+  let neck = headBox.isEmpty() ? null : {
     pivot,
     range: new THREE.Vector4(pivot.z - 0.15 * H, pivot.z + 0.12 * H, pivot.y - 0.27 * H, pivot.y - 0.13 * H),
   };
-  return { parts, pivot, neck };
+  if (def.neck && meshMatrix) {
+    // an explicit neck, given in the model's own units: carry it through the same normalising transform
+    const at = (y, z) => new THREE.Vector3(0, y, z).applyMatrix4(meshMatrix);
+    const pv = at(...def.neck.pivot), lo = at(def.neck.y[0], def.neck.z[0]), hi = at(def.neck.y[1], def.neck.z[1]);
+    neck = { pivot: pv, range: new THREE.Vector4(lo.z, hi.z, lo.y, hi.y) };
+  }
+  return { parts, pivot: neck?.pivot ?? pivot, neck };
 }
 
 export async function loadLook(id, scene) {
@@ -215,10 +273,10 @@ class ModelLook {
       const neck = data.neck;
       if (hip != null) g.setAttribute('aGait', new THREE.InstancedBufferAttribute(new Float32Array(SHEEP_CAPACITY * 2), 2));
       if (neck) g.setAttribute('aHead', new THREE.InstancedBufferAttribute(new Float32Array(SHEEP_CAPACITY * 2), 2));
-      if (hip != null || neck) withRig(m, hip, neck);
+      if (hip != null || neck) withRig(m, hip, neck, def.graze);
       withClouds(m);
       // 两套材质：写实（PBR）和插画光影，开发面板里切换
-      const toonMat = makeSheepMaterial({ map: mat.map, color: mat.color, side: mat.side, hip, neck });
+      const toonMat = makeSheepMaterial({ map: mat.map, color: mat.color, side: mat.side, hip, neck, graze: def.graze });
       const mesh = new THREE.InstancedMesh(g, toon ? toonMat : m, SHEEP_CAPACITY);
       mesh.userData.materials = { real: m, toon: toonMat };
       mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -252,6 +310,9 @@ class ModelLook {
       _m.multiplyMatrices(s.tilt.matrixWorld, _m2);
       // 头：绕脖子低头吃草、转头张望（有脖子权重时在着色器里弯；没有的模型才把头部件整块转开）
       const hp = (Math.min(graze, 1.2) * 0.55 - 0.05) * (this.def.nod ?? 1), hy = s.yaw * 0.8;
+      // baked grazing pose: aHead.x carries how far into it (0 standing … 1 grazing) instead of a nod angle
+      const hx = this.def.graze ? THREE.MathUtils.smoothstep(graze, 0.15, 1.1) : hp;
+      if (this.def.coats) s.coat ??= this.def.coats();
       if (!this.neck) {
         _m3.makeTranslation(p.x, p.y, p.z)
           .multiply(_m2.makeRotationFromEuler(_e.set(hp, hy, 0)))
@@ -261,11 +322,11 @@ class ModelLook {
       const amp = Math.min(speed / 1.3, 1) * (speed > 2.4 ? 0.6 : 0.42);
       for (const mesh of this.meshes) {
         mesh.setMatrixAt(i, mesh.userData.isHead && !this.neck ? _m3 : _m);
-        mesh.setColorAt(i, _c.setScalar(s.tint));
+        mesh.setColorAt(i, this.def.coats ? _c.copy(s.coat).multiplyScalar(s.tint) : _c.setScalar(s.tint));
         const gait = mesh.geometry.attributes.aGait;
         if (gait) { gait.array[i * 2] = s.phase; gait.array[i * 2 + 1] = amp; }
         const head = mesh.geometry.attributes.aHead;
-        if (head) { head.array[i * 2] = hp; head.array[i * 2 + 1] = hy; }
+        if (head) { head.array[i * 2] = hx; head.array[i * 2 + 1] = hy; }
       }
       this.owners[i] = s;
     }
