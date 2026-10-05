@@ -1,6 +1,13 @@
 # 在伊犁草原放羊
 Claude Opus 5.5 制作。
 
+> **vibe-shepherding** is a clone of [hyraland/shepherd](https://github.com/hyraland/shepherd) (MIT), live at **https://ranranli.net/vibe-shepherding/**.
+> One difference: the original's realistic sheep is a CGTrader model licensed to the original author only, so it isn't included here.
+> The sheep in this copy are generated in code (`src/sheepProcedural.js`). To use the original model, see [CREDITS.md](CREDITS.md).
+>
+> 这是 [hyraland/shepherd](https://github.com/hyraland/shepherd)（MIT）的克隆，在线地址：https://ranranli.net/vibe-shepherding/ 。
+> 唯一的不同：原作的写实小羊是 CGTrader 模型，授权只给了原作者，所以没有克隆过来；这里的小羊是代码生成的（`src/sheepProcedural.js`）。想换回原来的模型，见 [CREDITS.md](CREDITS.md)。
+
 基于 three.js 的第一人称草原牧羊：一条走不到尽头的东西向河谷，谷底是草甸和蜿蜒的溪流，
 两侧是云杉林坡，东边地平线上是雪山；朝着太阳望去，溪流流向下游远处一片低低的湖，湖面和溪水闪着金色的碎光。
 草甸上开着伊犁草原常见的野花：毛茛、金莲花、蓍草、草原老鹳草、野罂粟（虞美人），会走进一片片以某种花为主的地块；
@@ -16,7 +23,7 @@ python3 serve.py
 ```
 
 - **正式版** http://localhost:8000/
-- **开发版** http://localhost:8000/dev.html ：多了画面调节面板（G 显示 / 隐藏，改动会写回 `tuning.json`）、数字键 1–3 / M 切换小羊模型、控制台里的 `window.__yili`。“⋯”菜单挪到面板左边。
+- **开发版** http://localhost:8000/dev.html ：多了画面调节面板（G 显示 / 隐藏，改动会写回 `tuning.json`）、数字键 1–4 / M 切换小羊模型、控制台里的 `window.__yili`。“⋯”菜单挪到面板左边。
 
 three.js 从 CDN 加载，需要联网。
 
@@ -61,15 +68,16 @@ three.js 从 CDN 加载，需要联网。
 
 ## 开发：对比小羊模型
 
-- 主场景里按数字键 **1–3** 切换模型，**M** 轮换；也可以用 `?sheep=cgtrader|dibarts|cartoon`。
+- 主场景里按数字键 **1–4** 切换模型，**M** 轮换；也可以用 `?sheep=woolly|cgtrader|dibarts|cartoon`。
   选择会记在浏览器里，切换时左下角会短暂显示当前模型名。
 - `compare.html`：几种模型并排站着、同样的光照，可切换吃草 / 抬头 / 走路 / 小跑。
 
 | 键 | 模型 | 说明 |
 | --- | --- | --- |
-| 1 | Realistic Sheep · WildMesh3D（CGTrader） | 写实贴图；头部单独点头/转头。CGTrader 版税授权：公开发布前需加密打包，见 CREDITS.md |
-| 2 | Sheep · DibArts | 低面数 |
-| 3 | Cartoon sheep · _Yen_ | 卡通高模，头部单独点头/转头 |
+| 1 | 小羊（程序生成） | 这个克隆版的默认小羊：一团团毛球拼成的身体、毛裤、耷拉的耳朵；代码在 `src/sheepProcedural.js` |
+| 2 | Realistic Sheep · WildMesh3D（CGTrader） | 原作用的模型，克隆里不带（见 CREDITS.md）。写实贴图；头部单独点头/转头 |
+| 3 | Sheep · DibArts | 低面数（模型需自己放进 `models/`） |
+| 4 | Cartoon sheep · _Yen_ | 卡通高模，头部单独点头/转头（模型需自己放进 `models/`） |
 
 这几个都是不带骨骼的静态模型：腿部在顶点着色器里按步伐摆动（对角线两条腿同相），身体走路时轻晃、吃草时前倾。
 
@@ -79,6 +87,7 @@ three.js 从 CDN 加载，需要联网。
 - `src/walker.js`：第一人称行走（往视线方向走 / 沿固定的环形小路走）与相机
 - `src/flock.js`：羊群行为（聚到视线前方；吃草/赶路、从众跟随、分离/对齐/聚合；赶路时有的羊停下啃几口、落后再小跑追上，羊群内部慢慢流动）
 - `src/sheep.js`：羊的骨架（由羊群逻辑摆姿势）、接触阴影
+- `src/sheepProcedural.js`：程序生成的小羊（这个克隆版的默认外观）
 - `src/sheepPack.js`、`src/sheepKey.js`、`tools/pack-sheep.mjs`：小羊模型的加密打包与解密加载
 - `src/sheepModels.js`：外部 glTF 模型的加载、归一化、腿部摆动和头部转动（低头 / 转头时脖子按权重拉伸弯曲，头和身体不会裂开）
 - `src/grass.js`：跟随相机的两层短草（一丛丛长，两层之间逐根交替没有分界；一阵阵风吹过、草被压弯处反光变亮，云影、日照阴影，溪流里不长草）
@@ -101,4 +110,4 @@ three.js 从 CDN 加载，需要联网。
 
 ## 许可
 
-源代码采用 MIT 许可（见 [LICENSE](LICENSE)）。小羊模型（`assets/sheep.pack`）和羊叫声（`assets/sounds/`）不在 MIT 许可范围内，各自的授权见 [CREDITS.md](CREDITS.md)。
+源代码采用 MIT 许可（见 [LICENSE](LICENSE)）。小羊模型（`assets/sheep.pack`，这个克隆版里没有）和羊叫声（`assets/sounds/`）不在 MIT 许可范围内，各自的授权见 [CREDITS.md](CREDITS.md)。

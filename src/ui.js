@@ -76,9 +76,9 @@ const HELP = (max) => `
 
 const CREDITS = `
 <h2>致谢</h2>
-<h3>小羊模型</h3>
-<p>“Realistic Sheep 3D Model” by WildMesh3D —
-<a href="https://www.cgtrader.com/free-3d-models/animal/mammal/realistic-sheep-3d-model" target="_blank" rel="noopener">CGTrader</a>（Royalty Free License）</p>
+<h3>原作</h3>
+<p>《在伊犁草原放羊》by Hyraland —
+<a href="https://github.com/hyraland/shepherd" target="_blank" rel="noopener">hyraland/shepherd</a>（MIT License）。这里是它的一个克隆；原作的写实小羊模型授权不随代码一起，所以这里的小羊换成了程序生成的。</p>
 <h3>羊叫声</h3>
 <p>Sheep sounds from “Yo Frankie!” © Blender Foundation —
 <a href="https://opengameart.org/content/sheep-sound-bleats-yo-frankie" target="_blank" rel="noopener">OpenGameArt</a>，
@@ -87,7 +87,7 @@ const CREDITS = `
 <a href="https://opengameart.org/node/132779" target="_blank" rel="noopener">OpenGameArt</a>，CC0</p>
 <h3>渲染</h3>
 <p><a href="https://threejs.org" target="_blank" rel="noopener">three.js</a>（MIT License）</p>
-<p class="note">草地、野花、云杉、溪流与湖、天空、熊蜂，以及风声、溪水、蜂鸣、云雀和背景音乐，都是在浏览器里现场程序生成的。</p>
+<p class="note">小羊、草地、野花、云杉、溪流与湖、天空、熊蜂，以及风声、溪水、蜂鸣、云雀和背景音乐，都是在浏览器里现场程序生成的。</p>
 `;
 
 export function createMenu({ sound, maxSheep, right = 14 }) {

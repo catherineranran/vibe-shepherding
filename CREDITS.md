@@ -1,5 +1,14 @@
 # 素材署名 / Credits
 
+## 原作
+
+这个仓库克隆自 [hyraland/shepherd](https://github.com/hyraland/shepherd)（《在伊犁草原放羊》，MIT License，© 2026 CocoNana），提交历史原样保留，
+只是去掉了 `assets/sheep.pack`（见下面 CGTrader 一节）。
+
+## 小羊：程序生成（`src/sheepProcedural.js`）
+
+这个克隆版的默认小羊，完全由代码生成（身体、毛裤、头上的一撮毛都是一团团毛球，羊毛贴图也是运行时画的），随源代码一起采用 MIT 许可。
+
 ## Sketchfab，CC BY 4.0（允许商用，须署名）：开发版里可选的 2、3 号小羊
 
 正式版不加载这两个模型；如果以后用到，需要在页面可见处附上以下署名。
@@ -11,6 +20,12 @@
 并在着色器里加了腿部摆动和头部转动。
 
 ## CGTrader 版税授权：models/sheep_cgtrader
+
+> **这个克隆版不带 `assets/sheep.pack`。** CGTrader 的授权给的是下载模型的人（原作者），不能随仓库转给别人，
+> 原作的 LICENSE 也写明了不得复用或再分发这个模型。想用同一只羊：
+> 1. 自己在 CGTrader 下载这个免费模型（这样你自己就拿到了一份授权），把 `Sheep.gltf`、`Sheep.bin` 和贴图放进 `models/sheep_cgtrader/`（已被 .gitignore 忽略）；
+> 2. 运行 `node tools/pack-sheep.mjs`（用到 macOS 的 `sips`），生成新的 `assets/sheep.pack` 和 `src/sheepKey.js`；
+> 3. 把 `src/sheepModels.js` 里 `cgtrader` 那一项挪回 `SHEEP_LOOKS` 的第一个。
 
 - "Realistic Sheep 3D Model" by WildMesh3D — https://www.cgtrader.com/free-3d-models/animal/mammal/realistic-sheep-3d-model
   （Model ID #6034144，2025-04-10 发布，免费）

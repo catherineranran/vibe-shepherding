@@ -4,15 +4,25 @@ import { SHEEP_CAPACITY } from './sheep.js';
 import { withClouds } from './materials.js';
 import { makeSheepMaterial, sheepToonEnabled, NECK_GLSL } from './sheepShader.js';
 import { loadPackedGLTF } from './sheepPack.js';
+import { buildProceduralSheep } from './sheepProcedural.js';
 
-// 几种小羊外观（正式版只用 1 号；授权见 CREDITS.md）。1 号是 CGTrader 版税授权
+// 几种小羊外观（正式版只用 1 号；授权见 CREDITS.md）。
+// 1 号是这个克隆版程序生成的小羊；2 号是原作用的 CGTrader 模型（版税授权，克隆里不带 assets/sheep.pack，
+// 自己下载授权后用 tools/pack-sheep.mjs 打包就能用）；3、4 号需要自己把模型放进 models/。
 // 都是不带骨骼的静态模型：腿在顶点着色器里按步伐摆动，头部（分开的部件）绕脖子转动。
+//   build     代码生成模型（代替 url / pack）
+//   nod       低头吃草时头低下去的幅度（倍数，默认 1）
 //   height    归一化后的总高度（米，乘上每只羊的体型系数）
 //   headNode  用来判断头朝哪边的部件
 //   headParts 能单独点头 / 转头的部件（名字前缀，含子孙）
 //   hip       腿的上端（占总高度的比例），以下的部分会随步伐前后摆
 //   wool      用羊毛材质的部件（按材质名）：绒面光泽 + 用颜色贴图本身做凹凸，一卷卷的毛有起伏
 export const SHEEP_LOOKS = [
+  {
+    id: 'woolly', label: '小羊（程序生成）',
+    build: buildProceduralSheep, height: 1.0, headNode: 'head',
+    headParts: ['head'], hip: 0.28, wool: ['wool'], nod: 1.15,
+  },
   {
     id: 'cgtrader', label: 'Realistic Sheep · WildMesh3D（CGTrader）',
     pack: 'assets/sheep.pack', height: 1.0, headNode: 'sm_1_0_0',
@@ -63,6 +73,7 @@ function normalize(obj, headObj, height) {
 
 // DibArts 的模型用的是 KHR_materials_pbrSpecularGlossiness，新版 three 已不再解析，手动取出漫反射颜色
 function applySpecGlossColors(gltf) {
+  if (!gltf.parser) return;
   const json = gltf.parser.json;
   gltf.scene.traverse((o) => {
     if (!o.isMesh) return;
@@ -135,7 +146,8 @@ function withRig(material, hipY, neck) {
 }
 
 async function buildTemplate(def) {
-  const gltf = def.pack ? await loadPackedGLTF(def.pack) : await loader.loadAsync(def.url);
+  const gltf = def.build ? { scene: def.build() }
+    : def.pack ? await loadPackedGLTF(def.pack) : await loader.loadAsync(def.url);
   applySpecGlossColors(gltf);
   const head = def.headNode ? gltf.scene.getObjectByName(def.headNode) : null;
   const outer = normalize(gltf.scene, head, def.height);
@@ -239,7 +251,7 @@ class ModelLook {
       _m2.makeRotationFromEuler(_e.set(graze * 0.06, 0, roll));
       _m.multiplyMatrices(s.tilt.matrixWorld, _m2);
       // 头：绕脖子低头吃草、转头张望（有脖子权重时在着色器里弯；没有的模型才把头部件整块转开）
-      const hp = Math.min(graze, 1.2) * 0.55 - 0.05, hy = s.yaw * 0.8;
+      const hp = (Math.min(graze, 1.2) * 0.55 - 0.05) * (this.def.nod ?? 1), hy = s.yaw * 0.8;
       if (!this.neck) {
         _m3.makeTranslation(p.x, p.y, p.z)
           .multiply(_m2.makeRotationFromEuler(_e.set(hp, hy, 0)))
