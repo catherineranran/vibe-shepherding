@@ -116,7 +116,7 @@ export function createDevPanel(U, tuning, { onSheepStyle, onPlayMusic } = {}) {
   }, 'reset').name('Reset everything');
 
   addEventListener('keydown', (e) => {
-    if (e.code === 'KeyG') gui.show(gui._hidden);
+    if (e.code === 'KeyG' && !e.target.closest?.('input, textarea, select')) gui.show(gui._hidden);
   });
   return gui;
 }

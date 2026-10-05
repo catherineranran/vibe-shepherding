@@ -19,6 +19,7 @@ import { Post } from './post.js';
 import { cloudUniforms } from './materials.js';
 import { loadTuning, saveTuning } from './tuning.js';
 import { createMenu } from './ui.js';
+import { createNames } from './names.js';
 import { initSheepShading } from './sheepShader.js';
 
 // 开发版（dev.html）：有调节面板、切换小羊模型、调试入口；正式版（index.html）只有画面和右上角的菜单
@@ -239,9 +240,9 @@ function findSpawn() {
 }
 
 function addSheep() {
-  if (flock.active >= MAX_SHEEP) return;
+  if (flock.active >= MAX_SHEEP) return null;
   const spot = findSpawn();
-  if (spot) flock.spawn(spot.x, spot.z, 'enter');
+  return spot ? flock.spawn(spot.x, spot.z, 'enter') : null;
 }
 
 const raycaster = new THREE.Raycaster();
@@ -272,7 +273,7 @@ function removeSheep(px, py) {
 // —— 开发版：切换小羊模型（数字键 1–3 / M 轮换 / ?sheep=id）——
 const devLabel = document.createElement('div');
 Object.assign(devLabel.style, {
-  position: 'fixed', left: '14px', bottom: '12px', padding: '4px 10px', borderRadius: '6px',
+  position: 'fixed', left: '14px', top: '12px', padding: '4px 10px', borderRadius: '6px',   // top left: the name box sits bottom left
   font: '12px/1.4 -apple-system, "PingFang SC", sans-serif', color: '#fff', background: 'rgba(0,0,0,.45)',
   pointerEvents: 'none', opacity: '0', transition: 'opacity .4s',
 });
@@ -411,6 +412,9 @@ function adapt(dt) {
   perf.done = true;
 }
 
+// names that visitors give to alpacas (box at the bottom left, see names.js)
+const names = createNames({ flock, camera, addSheep, maxSheep: MAX_SHEEP });
+
 const clock = new THREE.Clock();
 let first = true;
 
@@ -432,6 +436,7 @@ function frame() {
   cloudUniforms.uSunView.value.copy(SUN_DIR).transformDirection(camera.matrixWorldInverse);
   updateHerdCenter(dt);
   flock.update(dt, time, herdCtx);
+  names.update(dt);
   { const f = camForward(); bees.update(dt, time, camera.position, f.x, f.z); }
   sound.update(dt, { camera, walker, flock, bees });
 

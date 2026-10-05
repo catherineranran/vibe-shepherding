@@ -77,6 +77,7 @@ const HELP = (max) => `
 <table>
   <tr><td>Look around</td><td>Drag the view, or <span class="keys"><kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd></span></td></tr>
   <tr><td>Call an alpaca</td><td>Click or tap the field, or press <span class="keys"><kbd>+</kbd> / <kbd>Enter</kbd></span> (up to ${max})</td></tr>
+  <tr><td>Name an alpaca</td><td>Type a name in the box at the bottom left; it disappears after 36 hours (or when you send that alpaca away)</td></tr>
   <tr><td>Send an alpaca away</td><td>Double-click or double-tap it, or press <span class="keys"><kbd>−</kbd> / <kbd>Backspace</kbd></span></td></tr>
   <tr><td>Stop / keep walking</td><td><kbd>Space</kbd></td></tr>
   <tr><td>Change how you walk</td><td><kbd>R</kbd>: walk wherever you look ↔ follow a fixed loop</td></tr>
