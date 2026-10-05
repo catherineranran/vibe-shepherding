@@ -1,115 +1,113 @@
-# 在伊犁草原放羊
-Claude Opus 5.5 制作。
+# Herding Sheep on the Ili Grassland
+Made by Claude Opus 5.5.
 
 > **vibe-shepherding** is a clone of [hyraland/shepherd](https://github.com/hyraland/shepherd) (MIT), live at **https://ranranli.net/vibe-shepherding/**.
-> One difference: the original's realistic sheep is a CGTrader model licensed to the original author only, so it isn't included here.
-> The sheep in this copy are generated in code (`src/sheepProcedural.js`). To use the original model, see [CREDITS.md](CREDITS.md).
-> The in-game menu, instructions and credits are in English, with a small "credit to @hyraland" line at the bottom of the page.
->
-> 这是 [hyraland/shepherd](https://github.com/hyraland/shepherd)（MIT）的克隆，在线地址：https://ranranli.net/vibe-shepherding/ 。
-> 唯一的不同：原作的写实小羊是 CGTrader 模型，授权只给了原作者，所以没有克隆过来；这里的小羊是代码生成的（`src/sheepProcedural.js`）。想换回原来的模型，见 [CREDITS.md](CREDITS.md)。
-> 游戏里的菜单、操作说明和致谢改成了英文，画面底部有一行小字 “credit to @hyraland”。
+> Differences from the original: the realistic sheep is a CGTrader model licensed to the original author only, so it isn't included here;
+> the sheep in this copy are generated in code (`src/sheepProcedural.js`). To use the original model, see [CREDITS.md](CREDITS.md).
+> All on-screen text is in English, and a small "credit to @hyraland" line sits at the bottom of the page.
 
-基于 three.js 的第一人称草原牧羊：一条走不到尽头的东西向河谷，谷底是草甸和蜿蜒的溪流，
-两侧是云杉林坡，东边地平线上是雪山；朝着太阳望去，溪流流向下游远处一片低低的湖，湖面和溪水闪着金色的碎光。
-草甸上开着伊犁草原常见的野花：毛茛、金莲花、蓍草、草原老鹳草、野罂粟（虞美人），会走进一片片以某种花为主的地块；
-花丛间有熊蜂。风声、溪水、蜂鸣、云雀的声音是现场合成的，羊叫用的是真实录音（见 CREDITS.md）；偶尔远远飘来一段现场生成的冬不拉曲（küy：两根弦一起扫的奔马节奏，旋律从高处一路下行，低音是擦弦的持续音）。
-雪山的雪线随山势起伏，沟里积雪、山脊露岩。
-真实感光照（太阳投影阴影、蓝色天光、飘过的云影），细密的草地被一阵阵风吹过，羊群聚在视线前方。
-右上角画面UI：操作说明、致谢和背景音乐的开关。
+A first-person sheep-herding scene built with three.js: an endless east–west river valley with meadows and a winding stream on the valley floor,
+spruce-covered slopes on both sides, and snow mountains on the eastern horizon. Looking toward the sun, the stream flows down to a low lake far downstream,
+and the lake and the stream glitter with broken gold light.
+The meadow is dotted with wildflowers common on the Ili grasslands — buttercups, globeflowers, yarrow, meadow cranesbill and wild poppies — and you'll wander
+through patches where one kind takes over, with bumblebees among the flowers. The wind, the stream, the buzzing and the skylarks are synthesized live; the sheep
+bleats are real recordings (see CREDITS.md). Now and then a live-generated dombra küy drifts in from far away (two strings strummed together in a galloping rhythm,
+the melody descending from high up, over a bowed drone).
+The snow line rises and falls with the mountains: snow lingers in the gullies and rock shows on the ridges.
+Realistic lighting (sun shadows, blue skylight, drifting cloud shadows), fine grass rippling under gusts of wind, and the flock gathered in front of you.
+Top-right UI: instructions, credits and a music toggle.
 
-## 运行
+## Run
 
 ```bash
 python3 serve.py
 ```
 
-- **正式版** http://localhost:8000/
-- **开发版** http://localhost:8000/dev.html ：多了画面调节面板（G 显示 / 隐藏，改动会写回 `tuning.json`）、数字键 1–4 / M 切换小羊模型、控制台里的 `window.__yili`。“⋯”菜单挪到面板左边。
+- **Release** http://localhost:8000/
+- **Dev** http://localhost:8000/dev.html: adds a look-tuning panel (G to show/hide; changes are written back to `tuning.json`), number keys 1–4 / M to switch sheep models, and `window.__yili` in the console. The "⋯" menu moves to the left of the panel.
 
-three.js 从 CDN 加载，需要联网。
+three.js is loaded from a CDN, so you need to be online.
 
-## 操作
+## Controls
 
-| 操作 | 效果 |
+| Input | What it does |
 | --- | --- |
-| 单击 / `+` / `Enter` | 唤来一只小羊（最多 50 只） |
-| 双击 / `−` / `Backspace` | 送走一只小羊 |
-| 拖动 / 方向键 | 环顾四周；默认往视线方向走，羊群跟随 |
-| 空格 | 停下 / 继续走 |
-| R | 切换走法：自由漫步（往视线方向走） / 沿固定的环形小路走（以当前位置为中心） |
-| 右上角“⋯” | 操作说明、致谢、背景音乐开 / 关 |
-| Esc | 关掉说明 / 致谢卡片和菜单 |
+| Click / `+` / `Enter` | Call a sheep (up to 50) |
+| Double-click / `−` / `Backspace` | Send a sheep away |
+| Drag / arrow keys | Look around; by default you walk where you're looking and the flock follows |
+| Space | Stop / keep walking |
+| R | Switch walking mode: free roam (walk where you look) / follow a fixed loop (centered on where you are) |
+| "⋯" at the top right | Instructions, credits, music on / off |
+| Esc | Close the instructions / credits card and the menu |
 
-## 无尽的河谷
+## The endless valley
 
-- 沿着河谷（东西方向）可以一直走下去：地形和树按 256m 的区块在人周围随走随生成。
-- 横跨河谷方向，靠近两边林坡时脚步会慢慢顺着林边转开。
-- 地平线上的雪山是一圈跟着人走的远景，像天空盒一样没有视差，所以永远走不到。
-- 开场会在出发点附近找一处面朝下游、能越过草坡望见湖的地方站着，羊群就在面前。
-- 下游的湖也跟着人走：近岸永远在约五百米开外，只能远远地望着。站在草坡上看得见，走进两道坡之间的洼地时会被眼前的坡挡住。
+- You can keep walking along the valley (east–west) forever: terrain and trees are generated around you in 256 m chunks as you go.
+- Across the valley, as you near the forested slopes on either side, your path slowly turns away along the forest edge.
+- The snow mountains on the horizon are a distant ring that moves with you, like a skybox with no parallax, so you can never reach them.
+- At the start you're placed near the starting point, facing downstream at a spot where you can see over the grassy slopes to the lake, with the flock in front of you.
+- The lake downstream moves with you too: its near shore is always about 500 m away, so you can only gaze at it from afar. You can see it from the grassy slopes; walk into a hollow between two slopes and the slope ahead hides it.
 
-## 开发：画面调节面板
+## Dev: look-tuning panel
 
-开发版（`dev.html`）右上角的面板（按 **G** 显示 / 隐藏），最上面是帧率，下面分五组：
+The panel at the top right of the dev version (`dev.html`; press **G** to show / hide) shows the frame rate at the top, followed by these groups:
 
-- **草地**：二分色开关、亮面颜色、亮面深色（叶根和深一些的草丛）、暗面颜色、明暗分界、分界柔和度、深色的多少、野花（0 = 没有花）、藏色
-- **云杉林**：亮面颜色、暗面颜色（近处的树和远处山坡上的林子一起变；和草地的颜色分开调）、藏色（一部分枝条悄悄换成别的色相，和草地的藏色同一个做法）
-- **羊**：插画光影开关（关掉是写实材质）、亮面 / 暗面颜色、暗面靠向草地暗面的程度、明暗分界、柔和度、
-  贴图细节（0 = 平涂）、毛绒凹凸、边缘亮光、整体亮度、向阳面提亮
-- **溪流与湖**：水色（深色的水底）、天空倒影、波纹细碎程度、阳光闪光强度（溪流和湖）、远处闪光颜色（朝着太阳望去远处水面的金光）、湖水颜色
-- **天空与太阳**：太阳高度、太阳方位（0 = 顺河谷向西，转动太阳不会转动河谷）、阳光 / 天光强度、
-  天顶 / 地平线颜色、地平线浅色带高度、远处雾气、空气感、曝光（只影响写实的部分：水、林、山）、强光辉光（太阳和水面闪光周围的光晕）；云影的覆盖、浓淡（云影是介于亮面和暗面之间的一层，1 = 和投影一样暗）、边缘柔和、飘动速度
+- **Grass**: two-tone toggle, lit color, lit deep color (blade roots and denser tufts), shadow color, light/shadow edge, edge softness, amount of dark patches, wildflowers (0 = none), hidden hues
+- **Spruce forest**: lit color, shadow color (the near trees and the forest on far slopes change together; tuned separately from the grass), hidden hues (some branches quietly switch to other hues, the same trick as the grass)
+- **Sheep**: illustrated-shading toggle (off = realistic materials), lit / shadow colors, how far the shadow leans toward the grass shadow, light/shadow edge, softness,
+  texture detail (0 = flat), fluffy bump, rim light, overall brightness, sunny-side boost
+- **Stream & lake**: water color (the dark water bed), sky reflection, ripple fineness, sun glitter strength (stream and lake), distant glitter color (the golden light on far water toward the sun), lake color
+- **Sky & sun**: sun elevation, sun azimuth (0 = west along the valley; turning the sun doesn't turn the valley), sunlight / skylight strength,
+  zenith / horizon colors, horizon band height, distant haze, atmosphere, exposure (affects only the realistic parts: water, forest, mountains), bloom (the glow around the sun and the water glitter); cloud shadow cover, strength (cloud shadow is a layer between lit and shadow; 1 = as dark as cast shadows), edge softness, drift speed
+- **Sound**: master volume, wind & grass, stream, sheep bleats, bumblebees, skylarks, music (0 = off), music style (dombra küy / steppe tune), "Play some music now" (for previewing)
 
-- **声音**：总音量、风和草、溪水、羊叫、熊蜂、云雀、背景音乐（0 = 关掉）、音乐风格（冬不拉曲 / 草原小曲）、“立刻来一段音乐”（试听用）
+Colors are picked as they finally appear on screen (exposure and tone mapping are compensated). Every change is saved in the browser
+and, through `serve.py`, written back to **tuning.json** in the project root, which is used as the default on startup (the release version only reads it).
 
-颜色选的就是屏幕上最终看到的颜色（已抵消曝光和色调映射）。每次改动都会存到浏览器，
-并通过 `serve.py` 写回项目根目录的 **tuning.json**——启动时以它为默认值（正式版只读它）。
+At the bottom of the panel are **presets**: pick one, then click "Apply this preset". "Open meadow" is bright grass and sky; "Deep blue sky" has a deeper blue sky and higher exposure. Presets don't change the sheep settings.
 
-面板底部有**预设**：选一个再点“套用这个预设”。“原野”是明亮的草地和天空；“深蓝天空”是更深的蓝天和更高的曝光。预设不改羊的参数。
+## Dev: comparing sheep models
 
-## 开发：对比小羊模型
+- In the main scene, press number keys **1–4** to switch models, or **M** to cycle through them; you can also use `?sheep=woolly|cgtrader|dibarts|cartoon`.
+  The choice is remembered in the browser, and the current model's name briefly appears at the bottom left when you switch.
+- `compare.html`: the models stand side by side under the same lighting; switch between graze / look up / walk / trot.
 
-- 主场景里按数字键 **1–4** 切换模型，**M** 轮换；也可以用 `?sheep=woolly|cgtrader|dibarts|cartoon`。
-  选择会记在浏览器里，切换时左下角会短暂显示当前模型名。
-- `compare.html`：几种模型并排站着、同样的光照，可切换吃草 / 抬头 / 走路 / 小跑。
-
-| 键 | 模型 | 说明 |
+| Key | Model | Notes |
 | --- | --- | --- |
-| 1 | 小羊（程序生成） | 这个克隆版的默认小羊：一团团毛球拼成的身体、毛裤、耷拉的耳朵；代码在 `src/sheepProcedural.js` |
-| 2 | Realistic Sheep · WildMesh3D（CGTrader） | 原作用的模型，克隆里不带（见 CREDITS.md）。写实贴图；头部单独点头/转头 |
-| 3 | Sheep · DibArts | 低面数（模型需自己放进 `models/`） |
-| 4 | Cartoon sheep · _Yen_ | 卡通高模，头部单独点头/转头（模型需自己放进 `models/`） |
+| 1 | Woolly sheep (procedural) | This clone's default sheep: a body of wool puffs, wool "trousers", drooping ears; code in `src/sheepProcedural.js` |
+| 2 | Realistic Sheep · WildMesh3D (CGTrader) | The original's model, not included in this clone (see CREDITS.md). Realistic textures; the head nods / turns on its own |
+| 3 | Sheep · DibArts | Low-poly (put the model in `models/` yourself) |
+| 4 | Cartoon sheep · _Yen_ | Cartoon, high-poly; the head nods / turns on its own (put the model in `models/` yourself) |
 
-这几个都是不带骨骼的静态模型：腿部在顶点着色器里按步伐摆动（对角线两条腿同相），身体走路时轻晃、吃草时前倾。
+All of these are static models without skeletons: the legs swing in the vertex shader in step with the gait (diagonal legs in phase), and the body sways when walking and leans forward when grazing.
 
-## 结构
+## Structure
 
-- `src/main.js`：场景组装、光照与阴影、输入（鼠标 / 触摸 / 键盘）、渲染循环；开发版（`window.YILI_DEV`）才加载调节面板和模型切换
-- `src/walker.js`：第一人称行走（往视线方向走 / 沿固定的环形小路走）与相机
-- `src/flock.js`：羊群行为（聚到视线前方；吃草/赶路、从众跟随、分离/对齐/聚合；赶路时有的羊停下啃几口、落后再小跑追上，羊群内部慢慢流动）
-- `src/sheep.js`：羊的骨架（由羊群逻辑摆姿势）、接触阴影
-- `src/sheepProcedural.js`：程序生成的小羊（这个克隆版的默认外观）
-- `src/sheepPack.js`、`src/sheepKey.js`、`tools/pack-sheep.mjs`：小羊模型的加密打包与解密加载
-- `src/sheepModels.js`：外部 glTF 模型的加载、归一化、腿部摆动和头部转动（低头 / 转头时脖子按权重拉伸弯曲，头和身体不会裂开）
-- `src/grass.js`：跟随相机的两层短草（一丛丛长，两层之间逐根交替没有分界；一阵阵风吹过、草被压弯处反光变亮，云影、日照阴影，溪流里不长草）
-- `src/scenery.js`：雪岭云杉（程序生成：细高的柱状树冠，一轮轮下垂的枝条由交叉的“枝片”拼成，贴图是运行时画出来的带针叶小枝、边缘参差透光；整棵树冠一起受光，树的高矮胖瘦和歪斜各不相同；450 米外换成简化版；亮面 / 暗面颜色在面板“云杉林”里调）
-- `src/terrain.js`：河谷地形与着色（林地、溪水的波纹倒影与太阳闪光（反光区里密密的细碎亮点 + 柔光，远处朝太阳的光路偏金色）、自然的湿土岸、远处的野花、冲沟积雪）、区块网格、地平线远景圈、下游的湖
-- `src/world.js`：无尽河谷的区块管理（随走随生成地形和树，远处网格更粗）
-- `src/rivers.js`：溪流的解析定义（JS 与 GLSL 共用一套参数）
-- `src/sky.js`：蓝天（天顶到地平线的浅色带）、太阳、头顶的云
-- `src/bees.js`：熊蜂（在人附近的花丛之间飞、在花上悬停）
-- `src/ui.js`：右上角的“⋯”菜单、操作说明和致谢卡片
-- `src/audio.js`：声音（Web Audio 现场合成，按位置立体声）
-- `src/musicKuy.js`：背景音乐（默认）——现场生成的冬不拉曲：两根弦按四度定弦一起扫，上弦弹旋律、下弦是空弦持续音或平行四度；2/4 拍的“奔马”音型；D 混合利底亚调式，动机重复、模进、一路下行回到主音；擦弦的低音持续音，手鼓多半从第二部分加进来；散板引子 → 奔马段（主题 A 反复出现，中间穿插 B、C，部分之间用一小节空弦奔马连接，越往后稍快）→ 渐慢收尾；一段四五十秒，之后歇十几秒
-- `src/musicSong.js`：另一种背景音乐（开发版面板里可选）——草原小曲：冬不拉 6/8 马蹄节奏 + 斯布斯额式的长笛旋律，民歌式结构（A、A′、B、A′）
-- `src/flowers.js`：近处的野花，按颜色分成五种花形（远处的花画在地面上）；矮矮地开在草丛里，远了逐渐溶进地面的花点
-- `src/noiseTexture.js`：着色器共用的预烘噪声纹理（附带与之一致的 CPU 采样，用来种树）
-- `src/post.js`：强光辉光（逐级缩放的平滑辉光，小亮点晕成圆形）、Khronos PBR Neutral 色调映射
-- `src/config.js`：太阳方向、光照强度、配色、草地二分色默认值、羊的上限等参数
-- `src/devPanel.js`、`src/tuning.js`：开发版的画面调节面板，参数存取（tuning.json；正式版只读不写）
-- `src/sheepShader.js`：插画风的羊（与草地同一套受光量：太阳朝向 × 云影 × 投影）
+- `src/main.js`: scene setup, lighting and shadows, input (mouse / touch / keyboard), render loop; only the dev version (`window.YILI_DEV`) loads the tuning panel and model switching
+- `src/walker.js`: first-person walking (walk where you look / follow a fixed loop) and the camera
+- `src/flock.js`: flock behavior (gathering in front of you; grazing / travelling, following the herd, separation / alignment / cohesion; while travelling some sheep stop for a few bites, fall behind and trot to catch up, so the flock slowly churns)
+- `src/sheep.js`: the sheep "rig" (posed by the flock logic) and contact shadows
+- `src/sheepProcedural.js`: the procedural sheep (this clone's default look)
+- `src/sheepPack.js`, `src/sheepKey.js`, `tools/pack-sheep.mjs`: encrypted packing and decrypting loader for the sheep model
+- `src/sheepModels.js`: loading external glTF models, normalizing them, leg swing and head turning (when the head dips or turns, the neck stretches and bends by weight, so head and body never come apart)
+- `src/grass.js`: two layers of short grass that follow the camera (grows in tufts; the two layers alternate blade by blade with no visible seam; gusts of wind roll through and bent grass catches the light; cloud shadows and sun shadows; no grass in the stream)
+- `src/scenery.js`: Schrenk's spruces (procedural: slender columnar crowns; tiers of drooping branches built from crossed "branch cards" whose texture of needled twigs with ragged, light-leaking edges is painted at runtime; the whole crown is lit as one; every tree differs in height, girth and lean; replaced by a simpler version beyond 450 m; lit / shadow colors are tuned under "Spruce forest" in the panel)
+- `src/terrain.js`: valley terrain and shading (forest floor; the stream's rippling reflections and sun glitter — dense fine sparkles plus a soft glow in the reflection zone, turning gold along the far light path toward the sun; natural wet banks; distant wildflowers; snow in the gullies), chunk meshes, the horizon ring, the lake downstream
+- `src/world.js`: chunk management for the endless valley (terrain and trees generated as you walk; coarser meshes in the distance)
+- `src/rivers.js`: analytic definition of the stream (one set of parameters shared by JS and GLSL)
+- `src/sky.js`: blue sky (a light band from zenith to horizon), the sun, clouds overhead
+- `src/bees.js`: bumblebees (flying between flowers near you and hovering over them)
+- `src/ui.js`: the "⋯" menu at the top right, the instructions and credits cards, and the "credit to @hyraland" line
+- `src/audio.js`: sound (synthesized live with Web Audio, positioned in stereo)
+- `src/musicKuy.js`: background music (default) — a live-generated dombra küy: two strings tuned a fourth apart and strummed together, the melody on the upper string and an open-string drone or parallel fourths on the lower one; a galloping 2/4 pattern; D Mixolydian, with repeated motifs and sequences descending all the way back to the tonic; a bowed bass drone, with a hand drum usually joining from the second part; free-tempo intro → galloping section (theme A recurring, with B and C in between, parts linked by a bar of open-string gallop, getting a little faster) → slowing ending; each piece lasts 40–50 seconds, followed by a rest of a dozen seconds or so
+- `src/musicSong.js`: alternative background music (selectable in the dev panel) — a steppe tune: dombra in a 6/8 hoofbeat rhythm with a sybyzgy-style flute melody in folk-song form (A, A′, B, A′)
+- `src/flowers.js`: nearby wildflowers in five flower shapes by color (distant flowers are painted onto the ground); they bloom low in the grass and gradually dissolve into ground speckles with distance
+- `src/noiseTexture.js`: a pre-baked noise texture shared by the shaders (with a matching CPU sampler, used for placing trees)
+- `src/post.js`: bloom (smooth glow built from progressively scaled levels; small highlights bloom into round halos) and Khronos PBR Neutral tone mapping
+- `src/config.js`: sun direction, light intensities, palette, grass two-tone defaults, the sheep limit and other parameters
+- `src/devPanel.js`, `src/tuning.js`: the dev version's tuning panel and parameter storage (tuning.json; read-only in the release version)
+- `src/sheepShader.js`: illustrated sheep shading (the same amount of light as the grass: sun facing × cloud shadow × cast shadow)
 
-## 许可
+## License
 
-源代码采用 MIT 许可（见 [LICENSE](LICENSE)）。小羊模型（`assets/sheep.pack`，这个克隆版里没有）和羊叫声（`assets/sounds/`）不在 MIT 许可范围内，各自的授权见 [CREDITS.md](CREDITS.md)。
+The source code is MIT-licensed (see [LICENSE](LICENSE)). The sheep model (`assets/sheep.pack`, not included in this clone) and the sheep sounds (`assets/sounds/`) aren't covered by the MIT license; see [CREDITS.md](CREDITS.md) for their terms.

@@ -291,7 +291,7 @@ async function switchLook(id) {
   switching = true;
   const i = SHEEP_LOOKS.findIndex((d) => d.id === id);
   const def = SHEEP_LOOKS[i];
-  showDev(`加载中 · ${def.label}`, true);
+  showDev(`Loading · ${def.label}`, true);
   try {
     flock.setLook(await loadLook(id, scene));
     lookId = id;
@@ -299,7 +299,7 @@ async function switchLook(id) {
     showDev(`${i + 1} · ${def.label}`);
   } catch (e) {
     console.error(e);
-    showDev(`加载失败 · ${def.label}`);
+    showDev(`Failed to load · ${def.label}`);
   }
   switching = false;
 }
@@ -373,7 +373,7 @@ addEventListener('keydown', (e) => {
     if (def) switchLook(def.id);
   } else if (e.code === 'KeyR') {
     walker.setMode(walker.mode === 'free' ? 'path' : 'free');
-    if (DEV) showDev(walker.mode === 'free' ? '自由漫步：往视线方向走' : '沿固定小路走');
+    if (DEV) showDev(walker.mode === 'free' ? 'Free roam: walk wherever you look' : 'Following a fixed loop');
   } else if (DEV && e.code === 'KeyM') {
     const i = SHEEP_LOOKS.findIndex((d) => d.id === lookId);
     switchLook(SHEEP_LOOKS[(i + 1) % SHEEP_LOOKS.length].id);
@@ -446,7 +446,7 @@ function frame() {
   if (first) {
     first = false;
     requestAnimationFrame(() => document.getElementById('veil').classList.add('gone'));
-    if (DEV) showDev(`${SHEEP_LOOKS.findIndex((d) => d.id === lookId) + 1} · ${SHEEP_LOOKS.find((d) => d.id === lookId).label}　（数字键 1–${SHEEP_LOOKS.length} / M 切换小羊模型）`);
+    if (DEV) showDev(`${SHEEP_LOOKS.findIndex((d) => d.id === lookId) + 1} · ${SHEEP_LOOKS.find((d) => d.id === lookId).label}  (keys 1–${SHEEP_LOOKS.length} / M switch the sheep model)`);
   }
   requestAnimationFrame(frame);
 }

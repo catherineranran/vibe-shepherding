@@ -80,7 +80,7 @@ export class Soundscape {
         const r = await fetch(`assets/sounds/${f}`);
         if (!r.ok) return;
         this.bleatBufs.push(await this.ctx.decodeAudioData(await r.arrayBuffer()));
-      } catch (e) { console.warn('羊叫录音加载失败', f, e); }
+      } catch (e) { console.warn('Could not load sheep sound', f, e); }
     }));
   }
 

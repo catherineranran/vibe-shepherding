@@ -65,7 +65,7 @@ def main():
     root = os.path.dirname(os.path.abspath(__file__))
     handler = functools.partial(NoCacheHandler, directory=root)
     with http.server.ThreadingHTTPServer(('', port), handler) as httpd:
-        print(f'在伊犁草原放羊：http://localhost:{port}')
+        print(f'Herding Sheep on the Ili Grassland: http://localhost:{port}')
         try:
             httpd.serve_forever()
         except KeyboardInterrupt:

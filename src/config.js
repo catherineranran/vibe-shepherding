@@ -100,7 +100,7 @@ export const TUNING_DEFAULTS = {
 
 // 面板里的预设：只覆盖列出来的项，其余（比如羊）保持不变
 export const TUNING_PRESETS = {
-  '原野': {
+  'Open meadow': {
     grass: { light: '#a9b95c', lightDeep: '#7f8f42', shadow: '#5a678c', variation: 0.4, flowers: 0.45 },
     sky: {
       elevation: 24, azimuth: 0, sun: 2.4, skyLight: 0.6, zenith: '#2a66bd', horizon: '#c2d8ee',
@@ -108,7 +108,7 @@ export const TUNING_PRESETS = {
     },
     water: { color: '#1d3a44', reflection: 0.85, ripple: 1.0, glitter: 1.0, glitterColor: '#ffe2a8', lake: '#2f6fae' },
   },
-  '深蓝天空': {
+  'Deep blue sky': {
     grass: { toon: true, light: '#c7ea66', lightDeep: '#4c66a4', shadow: '#5c69a3', edge: 0.05, softness: 0.045, variation: 0.35, flowers: 0 },
     sky: {
       elevation: 28.5, azimuth: 1, sun: 3.75, skyLight: 0.6, zenith: '#0056b3', horizon: '#5681c8', exposure: 2.2,

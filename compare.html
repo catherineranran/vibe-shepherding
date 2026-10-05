@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>小羊模型对比</title>
+<title>Sheep model comparison</title>
 <style>
   html, body { margin: 0; height: 100%; overflow: hidden; background: #a9cbee; font: 13px/1.5 -apple-system, "PingFang SC", sans-serif; }
   canvas { display: block; width: 100%; height: 100%; }
@@ -30,11 +30,11 @@
 </head>
 <body>
 <div id="bar">
-  <button data-mode="graze" class="on">吃草</button>
-  <button data-mode="look">抬头</button>
-  <button data-mode="walk">走路</button>
-  <button data-mode="trot">小跑</button>
-  <span style="opacity:.7">拖动旋转 · 滚轮缩放</span>
+  <button data-mode="graze" class="on">Graze</button>
+  <button data-mode="look">Look up</button>
+  <button data-mode="walk">Walk</button>
+  <button data-mode="trot">Trot</button>
+  <span style="opacity:.7">Drag to rotate · scroll to zoom</span>
 </div>
 <script type="module">
   // 防缓存：每次加载都换一个路径前缀（serve.py 会把 /v<数字>/ 去掉）；用别的静态服务器时退回普通路径

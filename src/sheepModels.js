@@ -19,12 +19,12 @@ import { buildProceduralSheep } from './sheepProcedural.js';
 //   wool      用羊毛材质的部件（按材质名）：绒面光泽 + 用颜色贴图本身做凹凸，一卷卷的毛有起伏
 export const SHEEP_LOOKS = [
   {
-    id: 'woolly', label: '小羊（程序生成）',
+    id: 'woolly', label: 'Woolly sheep (procedural)',
     build: buildProceduralSheep, height: 1.0, headNode: 'head',
     headParts: ['head'], hip: 0.28, wool: ['wool'], nod: 1.15,
   },
   {
-    id: 'cgtrader', label: 'Realistic Sheep · WildMesh3D（CGTrader）',
+    id: 'cgtrader', label: 'Realistic Sheep · WildMesh3D (CGTrader)',
     pack: 'assets/sheep.pack', height: 1.0, headNode: 'sm_1_0_0',
     headParts: ['sm_1_0_0', 'sm_2_0_0'], hip: 0.36, wool: ['Material.001', 'Material'],
   },

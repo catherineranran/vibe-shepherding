@@ -87,7 +87,7 @@ const HELP = (max) => `
 const CREDITS = `
 <h2>Credits</h2>
 <h3>Original</h3>
-<p><i>Herding Sheep on the Ili Grassland</i> (在伊犁草原放羊) by Hyraland —
+<p><i>Herding Sheep on the Ili Grassland</i> by Hyraland —
 <a href="https://github.com/hyraland/shepherd" target="_blank" rel="noopener">hyraland/shepherd</a> (MIT License).
 This is a clone of it. The original's realistic sheep model can't be copied under its license, so the sheep here are generated in code.</p>
 <h3>Sheep sounds</h3>

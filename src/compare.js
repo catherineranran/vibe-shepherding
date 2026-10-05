@@ -69,7 +69,7 @@ for (const [i, def] of SHEEP_LOOKS.entries()) {
   document.body.appendChild(tag);
   tags.push(tag);
   loadLook(def.id, scene).then((look) => { s.look = look; look.add(s); })
-    .catch((e) => { console.error(e); tag.textContent += '（加载失败）'; });
+    .catch((e) => { console.error(e); tag.textContent += ' (failed to load)'; });
 }
 
 let mode = 'graze';
