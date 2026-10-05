@@ -4,9 +4,11 @@ Claude Opus 5.5 制作。
 > **vibe-shepherding** is a clone of [hyraland/shepherd](https://github.com/hyraland/shepherd) (MIT), live at **https://ranranli.net/vibe-shepherding/**.
 > One difference: the original's realistic sheep is a CGTrader model licensed to the original author only, so it isn't included here.
 > The sheep in this copy are generated in code (`src/sheepProcedural.js`). To use the original model, see [CREDITS.md](CREDITS.md).
+> The in-game menu, instructions and credits are in English, with a small "credit to @hyraland" line at the bottom of the page.
 >
 > 这是 [hyraland/shepherd](https://github.com/hyraland/shepherd)（MIT）的克隆，在线地址：https://ranranli.net/vibe-shepherding/ 。
 > 唯一的不同：原作的写实小羊是 CGTrader 模型，授权只给了原作者，所以没有克隆过来；这里的小羊是代码生成的（`src/sheepProcedural.js`）。想换回原来的模型，见 [CREDITS.md](CREDITS.md)。
+> 游戏里的菜单、操作说明和致谢改成了英文，画面底部有一行小字 “credit to @hyraland”。
 
 基于 three.js 的第一人称草原牧羊：一条走不到尽头的东西向河谷，谷底是草甸和蜿蜒的溪流，
 两侧是云杉林坡，东边地平线上是雪山；朝着太阳望去，溪流流向下游远处一片低低的湖，湖面和溪水闪着金色的碎光。

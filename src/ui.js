@@ -1,7 +1,16 @@
 // 右上角一个半透明的“⋯”：点开是一个小菜单——操作说明、致谢、背景音乐开 / 关。
 // 平时几乎看不见，不打扰画面；说明和致谢是一张居中的半透明卡片，点卡片外面、✕ 或按 Esc 关掉。
+// 这个克隆版的界面文字是英文；画面底部正中有一行很小的“credit to @hyraland”。
 
 const CSS = `
+#ym-credit {
+  position: fixed; left: 50%; bottom: 10px; transform: translateX(-50%); z-index: 20;
+  font: 11px/1.4 -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", sans-serif; letter-spacing: .02em;
+  color: rgba(255,255,255,.72); text-shadow: 0 0 4px rgba(20,35,25,.45);
+  white-space: nowrap; pointer-events: none;
+}
+#ym-credit a { color: inherit; text-decoration: none; pointer-events: auto; }
+#ym-credit a:hover { color: #fff; text-decoration: underline; }
 #ym-dots {
   position: fixed; top: 14px; right: 14px; z-index: 20;
   width: 38px; height: 38px; border-radius: 50%; border: 0; padding: 0;
@@ -60,34 +69,36 @@ const CSS = `
   background: none; font-size: 18px; line-height: 30px; color: #6b7a87; cursor: pointer;
 }
 #ym-close:hover { background: rgba(36,50,63,.08); }
+#ym-card .keys { white-space: nowrap; }
 `;
 
 const HELP = (max) => `
-<h2>操作说明</h2>
+<h2>How to play</h2>
 <table>
-  <tr><td>环顾四周</td><td>拖动画面，或 <kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd></td></tr>
-  <tr><td>唤来一只小羊</td><td>单击画面，或按 <kbd>+</kbd> / <kbd>Enter</kbd>（最多 ${max} 只）</td></tr>
-  <tr><td>送走一只小羊</td><td>双击那只羊，或按 <kbd>−</kbd> / <kbd>Backspace</kbd></td></tr>
-  <tr><td>停下 / 继续走</td><td><kbd>Space</kbd></td></tr>
-  <tr><td>换一种走法</td><td><kbd>R</kbd>：往视线方向一直走 ↔ 沿着固定的小路走</td></tr>
+  <tr><td>Look around</td><td>Drag the view, or <span class="keys"><kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd></span></td></tr>
+  <tr><td>Call a sheep</td><td>Click or tap the field, or press <span class="keys"><kbd>+</kbd> / <kbd>Enter</kbd></span> (up to ${max})</td></tr>
+  <tr><td>Send a sheep away</td><td>Double-click or double-tap it, or press <span class="keys"><kbd>−</kbd> / <kbd>Backspace</kbd></span></td></tr>
+  <tr><td>Stop / keep walking</td><td><kbd>Space</kbd></td></tr>
+  <tr><td>Change how you walk</td><td><kbd>R</kbd>: walk wherever you look ↔ follow a fixed loop</td></tr>
 </table>
-<p class="note">一直往前走，草原没有尽头。声音会在第一次点击或按键后响起；背景音乐可以在右上角的菜单里关掉。</p>
+<p class="note">Keep walking — the grassland never ends. Sound starts after your first click or key press; you can switch the music off in the menu at the top right.</p>
 `;
 
 const CREDITS = `
-<h2>致谢</h2>
-<h3>原作</h3>
-<p>《在伊犁草原放羊》by Hyraland —
-<a href="https://github.com/hyraland/shepherd" target="_blank" rel="noopener">hyraland/shepherd</a>（MIT License）。这里是它的一个克隆；原作的写实小羊模型授权不随代码一起，所以这里的小羊换成了程序生成的。</p>
-<h3>羊叫声</h3>
+<h2>Credits</h2>
+<h3>Original</h3>
+<p><i>Herding Sheep on the Ili Grassland</i> (在伊犁草原放羊) by Hyraland —
+<a href="https://github.com/hyraland/shepherd" target="_blank" rel="noopener">hyraland/shepherd</a> (MIT License).
+This is a clone of it. The original's realistic sheep model can't be copied under its license, so the sheep here are generated in code.</p>
+<h3>Sheep sounds</h3>
 <p>Sheep sounds from “Yo Frankie!” © Blender Foundation —
-<a href="https://opengameart.org/content/sheep-sound-bleats-yo-frankie" target="_blank" rel="noopener">OpenGameArt</a>，
-<a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC BY 3.0</a>（播放时按体型改变了音高）</p>
+<a href="https://opengameart.org/content/sheep-sound-bleats-yo-frankie" target="_blank" rel="noopener">OpenGameArt</a>,
+<a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC BY 3.0</a> (pitch shifted to suit each sheep's size)</p>
 <p>“Sheep Baa” by AntumDeluge, from a recording by mikewest —
-<a href="https://opengameart.org/node/132779" target="_blank" rel="noopener">OpenGameArt</a>，CC0</p>
-<h3>渲染</h3>
-<p><a href="https://threejs.org" target="_blank" rel="noopener">three.js</a>（MIT License）</p>
-<p class="note">小羊、草地、野花、云杉、溪流与湖、天空、熊蜂，以及风声、溪水、蜂鸣、云雀和背景音乐，都是在浏览器里现场程序生成的。</p>
+<a href="https://opengameart.org/node/132779" target="_blank" rel="noopener">OpenGameArt</a>, CC0</p>
+<h3>Rendering</h3>
+<p><a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> (MIT License)</p>
+<p class="note">The sheep, grass, wildflowers, spruces, stream and lake, sky and bumblebees — and the wind, water, buzzing, skylarks and music — are all generated live in your browser.</p>
 `;
 
 export function createMenu({ sound, maxSheep, right = 14 }) {
@@ -97,25 +108,31 @@ export function createMenu({ sound, maxSheep, right = 14 }) {
 
   const dots = document.createElement('button');
   dots.id = 'ym-dots';
-  dots.setAttribute('aria-label', '菜单');
+  dots.setAttribute('aria-label', 'Menu');
   dots.innerHTML = '<span></span><span></span><span></span>';
 
   const menu = document.createElement('div');
   menu.id = 'ym-menu';
   menu.innerHTML = `
-    <button data-act="help">操作说明</button>
-    <button data-act="credits">致谢</button>
-    <button data-act="music">背景音乐 <span class="state"></span></button>`;
+    <button data-act="help">How to play</button>
+    <button data-act="credits">Credits</button>
+    <button data-act="music">Music <span class="state"></span></button>`;
   const musicState = menu.querySelector('.state');
-  const syncMusic = () => { musicState.textContent = sound.musicOn ? '开' : '关'; };
+  const syncMusic = () => { musicState.textContent = sound.musicOn ? 'On' : 'Off'; };
   syncMusic();
 
   const veil = document.createElement('div');
   veil.id = 'ym-veil';
-  veil.innerHTML = '<div id="ym-card" role="dialog"><button id="ym-close" aria-label="关闭">✕</button><div class="body"></div></div>';
+  veil.innerHTML = '<div id="ym-card" role="dialog"><button id="ym-close" aria-label="Close">✕</button><div class="body"></div></div>';
   const body = veil.querySelector('.body');
 
-  document.body.append(dots, menu, veil);
+  // 画面底部正中的一行小字，致谢原作者（只有链接能点，其余地方不挡画面上的拖动和点击）
+  const credit = document.createElement('div');
+  credit.id = 'ym-credit';
+  credit.innerHTML = 'credit to <a href="https://github.com/hyraland" target="_blank" rel="noopener">@hyraland</a>';
+
+  for (const el of [dots, menu, veil, credit]) el.lang = 'en';
+  document.body.append(dots, menu, veil, credit);
   dots.style.right = menu.style.right = `${right}px`;
 
   const setMenu = (open) => { menu.classList.toggle('open', open); dots.classList.toggle('open', open); };
