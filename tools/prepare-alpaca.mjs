@@ -7,15 +7,17 @@
 //     shader blends stand → mid → graze per animal to lower the neck, and swings the legs itself;
 //   - recolours the golden-brown fur to white (the eyes, hooves, teeth and tongue keep their colours, the darkest
 //     creases stay dark); each animal's coat colour is then applied per instance at runtime;
-//   - drops the skin, the animations, the normal and metallic/roughness maps (the illustrated shading doesn't use them)
-//     and shrinks the base colour texture from 4K to 2K;
-//   - encrypts the result (AES-256-GCM) so the model files can't be downloaded straight from the site, as the CGTrader
+//   - drops the skin and the animations; keeps the fur's normal map (the strands' relief) and its roughness;
+//   - writes two packages: assets/alpaca.pack (the mesh with 2K textures, loaded first by everyone) and
+//     assets/alpaca-4k.pack (just the original 4K fur colour and normal map, which desktop browsers load afterwards and
+//     swap in, so the fur ends up at the model's full resolution without making the page slow to start);
+//   - encrypts both (AES-256-GCM) so the model files can't be downloaded straight from the site, as the CGTrader
 //     licence requires, and writes a fresh key to src/alpacaKey.js.
 //
 // Usage: put the purchased Alpaca_2.glb in models/alpaca/ (git-ignored), then
 //   npm i @gltf-transform/core @gltf-transform/extensions @gltf-transform/functions sharp three
 //   node tools/prepare-alpaca.mjs [path/to/Alpaca_2.glb]
-import { NodeIO } from '@gltf-transform/core';
+import { NodeIO, Document } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { prune } from '@gltf-transform/functions';
 import sharp from 'sharp';
@@ -29,7 +31,8 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = process.argv[2] || join(ROOT, 'models/alpaca/Alpaca_2.glb');
 const MID = ['Idle_Headlow', 2.0];   // [animation, seconds into it]
 const EAT = ['Eating', 3.0];
-const TEX_SIZE = 2048;
+const TEX_SIZE = 2048;    // alpaca.pack
+const HD_SIZE = 4096;     // alpaca-4k.pack (the original resolution)
 
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS);
 const doc = await io.read(SRC);
@@ -114,41 +117,76 @@ for (const n of root.listNodes()) if (n !== meshNode) n.dispose();
 
 // —— material + white fur texture ——
 const mat = prim.getMaterial();
-mat.setName('fur').setNormalTexture(null).setMetallicRoughnessTexture(null).setMetallicFactor(0).setRoughnessFactor(1).setBaseColorFactor([1, 1, 1, 1]);
-const baseTex = mat.getBaseColorTexture();
-const { data, info } = await sharp(baseTex.getImage()).resize(TEX_SIZE, TEX_SIZE, { kernel: 'lanczos3' }).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+const baseTex = mat.getBaseColorTexture(), normalTex = mat.getNormalTexture(), mrTex = mat.getMetallicRoughnessTexture();
+const SRC_BASE = baseTex.getImage(), SRC_NORMAL = normalTex.getImage(), SRC_MR = mrTex.getImage();
 const ss = (e0, e1, x) => { const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0))); return t * t * (3 - 2 * t); };
-const out = Buffer.alloc(info.width * info.height * 3);
-for (let i = 0, o = 0; i < data.length; i += 4, o += 3) {
-  const r = data[i] / 255, g = data[i + 1] / 255, b = data[i + 2] / 255, alpha = data[i + 3] / 255;
-  let R = r, G = g, B = b;
-  if (alpha < 0.5) {
-    R = G = B = 0.86;   // empty texture space: light, so blurred mip levels don't darken the fur along seams
-  } else {
-    const L = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-    // fur = warm brown, judged relative to brightness so the darkest browns count too (red clearly above blue, not pink);
-    // eyes, hooves, teeth and tongue stay as they are
-    const k = Math.max(r, 0.03);
-    const fur = ss(0.12, 0.3, (r - b) / k) * (1 - ss(0, 0.1, (b - g) / k));
-    const light = Math.min(1, Math.max(0.6, 0.88 + (L - 0.31) * 0.6));   // golden fur → white wool, keeps the strand detail
-    const t = ss(0.03, 0.12, L);                                         // the darkest creases (nostrils, mouth, eye rims) go soft grey
-    const w = (0.42 + L * 2) * (1 - t) + light * t;
-    R = r + (w - r) * fur; G = g + (w * 0.995 - g) * fur; B = b + (w * 0.985 - b) * fur;
+// 4:4:4 (no chroma subsampling) keeps the fine strands, and keeps the normal map's x / y channels sharp
+const jpeg = (img, quality) => img.jpeg({ quality, mozjpeg: true, chromaSubsampling: '4:4:4' }).toBuffer();
+
+async function whiteFur(size) {
+  const { data, info } = await sharp(SRC_BASE).resize(size, size, { kernel: 'lanczos3' }).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const out = Buffer.alloc(info.width * info.height * 3);
+  for (let i = 0, o = 0; i < data.length; i += 4, o += 3) {
+    const r = data[i] / 255, g = data[i + 1] / 255, b = data[i + 2] / 255, alpha = data[i + 3] / 255;
+    let R = r, G = g, B = b;
+    if (alpha < 0.5) {
+      R = G = B = 0.86;   // empty texture space: light, so blurred mip levels don't darken the fur along seams
+    } else {
+      const L = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      // fur = warm brown, judged relative to brightness so the darkest browns count too (red clearly above blue, not pink);
+      // eyes, hooves, teeth and tongue stay as they are
+      const k = Math.max(r, 0.03);
+      const fur = ss(0.12, 0.3, (r - b) / k) * (1 - ss(0, 0.1, (b - g) / k));
+      const light = Math.min(1, Math.max(0.6, 0.88 + (L - 0.31) * 0.6));   // golden fur → white wool, keeps the strand detail
+      const t = ss(0.03, 0.12, L);                                         // the darkest creases (nostrils, mouth, eye rims) go soft grey
+      const w = (0.42 + L * 2) * (1 - t) + light * t;
+      R = r + (w - r) * fur; G = g + (w * 0.995 - g) * fur; B = b + (w * 0.985 - b) * fur;
+    }
+    out[o] = Math.round(R * 255); out[o + 1] = Math.round(G * 255); out[o + 2] = Math.round(B * 255);
   }
-  out[o] = Math.round(R * 255); out[o + 1] = Math.round(G * 255); out[o + 2] = Math.round(B * 255);
+  return jpeg(sharp(out, { raw: { width: info.width, height: info.height, channels: 3 } }), 92);
 }
-const jpg = await sharp(out, { raw: { width: info.width, height: info.height, channels: 3 } }).jpeg({ quality: 86, mozjpeg: true }).toBuffer();
-baseTex.setImage(jpg).setMimeType('image/jpeg').setURI('fur.jpg').setName('fur');
+// (quality 88 at 4:4:4: the normals come back within about a degree of the original on average)
+const normalMap = (size) => jpeg(sharp(SRC_NORMAL).removeAlpha().resize(size, size, { kernel: 'lanczos3' }), 88);
+
+// alpaca.pack: 2K colour and normal map, 1K roughness (the green channel; a grey JPEG has it in every channel, and
+// the metalness it also carries in blue is multiplied by a metallic factor of 0)
+const fur2k = await whiteFur(TEX_SIZE), normal2k = await normalMap(TEX_SIZE);
+const rough2k = await jpeg(sharp(SRC_MR).extractChannel(1).resize(TEX_SIZE / 2, TEX_SIZE / 2, { kernel: 'lanczos3' }), 90);
+mat.setName('fur').setMetallicFactor(0).setRoughnessFactor(1).setBaseColorFactor([1, 1, 1, 1]);
+baseTex.setImage(fur2k).setMimeType('image/jpeg').setURI('fur.jpg').setName('fur');
+normalTex.setImage(normal2k).setMimeType('image/jpeg').setURI('fur-normal.jpg').setName('fur-normal');
+mrTex.setImage(rough2k).setMimeType('image/jpeg').setURI('fur-roughness.jpg').setName('fur-roughness');
 for (const ext of root.listExtensionsUsed()) ext.dispose();
 await doc.transform(prune());
 const glb = Buffer.from(await io.writeBinary(doc));
 
+// alpaca-4k.pack: the 4K colour and normal map on a material of their own (with one stand-in triangle, so it loads
+// like any other model); the page takes the two textures and swaps them in
+const fur4k = await whiteFur(HD_SIZE), normal4k = await normalMap(HD_SIZE);
+const hd = new Document();
+const hdBuf = hd.createBuffer();
+const hdMat = hd.createMaterial('fur-4k').setMetallicFactor(0).setRoughnessFactor(1)
+  .setBaseColorTexture(hd.createTexture('fur-4k').setImage(fur4k).setMimeType('image/jpeg').setURI('fur-4k.jpg'))
+  .setNormalTexture(hd.createTexture('fur-normal-4k').setImage(normal4k).setMimeType('image/jpeg').setURI('fur-normal-4k.jpg'));
+const tri = hd.createPrimitive().setMaterial(hdMat)
+  .setAttribute('POSITION', hd.createAccessor().setType('VEC3').setArray(new Float32Array([0, 0, 0, 1, 0, 0, 0, 1, 0])).setBuffer(hdBuf))
+  .setAttribute('TEXCOORD_0', hd.createAccessor().setType('VEC2').setArray(new Float32Array([0, 0, 1, 0, 0, 1])).setBuffer(hdBuf));
+hd.createScene().addChild(hd.createNode('fur-4k').setMesh(hd.createMesh('fur-4k').addPrimitive(tri)));
+const hdGlb = Buffer.from(await io.writeBinary(hd));
+
 // —— encrypt: 12-byte IV + AES-256-GCM(GLB) ——
 const keyBytes = crypto.getRandomValues(new Uint8Array(32));
-const iv = crypto.getRandomValues(new Uint8Array(12));
 const key = await crypto.subtle.importKey('raw', keyBytes, 'AES-GCM', false, ['encrypt']);
-const cipher = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, glb));
-writeFileSync(join(ROOT, 'assets/alpaca.pack'), Buffer.concat([Buffer.from(iv), Buffer.from(cipher)]));
+// (a fresh IV for each package: AES-GCM must never reuse an IV with the same key)
+async function encrypt(data) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  return Buffer.concat([Buffer.from(iv), Buffer.from(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, data))]);
+}
+writeFileSync(join(ROOT, 'assets/alpaca.pack'), await encrypt(glb));
+writeFileSync(join(ROOT, 'assets/alpaca-4k.pack'), await encrypt(hdGlb));
 writeFileSync(join(ROOT, 'src/alpacaKey.js'),
-  `// Generated by tools/prepare-alpaca.mjs: key for decrypting assets/alpaca.pack\nexport const ALPACA_KEY = '${Buffer.from(keyBytes).toString('base64')}';\n`);
-console.log(`alpaca.pack: ${(glb.length / 1048576).toFixed(2)} MB (texture ${(jpg.length / 1024).toFixed(0)} KB, ${POS.getCount()} vertices)`);
+  `// Generated by tools/prepare-alpaca.mjs: key for decrypting assets/alpaca.pack and assets/alpaca-4k.pack\nexport const ALPACA_KEY = '${Buffer.from(keyBytes).toString('base64')}';\n`);
+const MB = (n) => (n / 1048576).toFixed(2);
+console.log(`alpaca.pack: ${MB(glb.length)} MB (colour ${MB(fur2k.length)}, normal ${MB(normal2k.length)}, roughness ${MB(rough2k.length)} MB; ${POS.getCount()} vertices)`);
+console.log(`alpaca-4k.pack: ${MB(hdGlb.length)} MB (colour ${MB(fur4k.length)}, normal ${MB(normal4k.length)} MB)`);

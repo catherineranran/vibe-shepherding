@@ -23,6 +23,9 @@ import { ALPACA_KEY } from './alpacaKey.js';
 //   headParts 能单独点头 / 转头的部件（名字前缀，含子孙）
 //   hip       腿的上端（占总高度的比例），以下的部分会随步伐前后摆
 //   wool      用羊毛材质的部件（按材质名）：绒面光泽 + 用颜色贴图本身做凹凸，一卷卷的毛有起伏
+//   hd        a second encrypted package with the fur's colour and normal map at full resolution: loaded after the
+//             game has started (desktop browsers only) and swapped in
+//   style     'real' or 'toon': this look's shading, whatever the tuning says (the dev panel can still switch it)
 // Alpaca coats: about 80% white variants and 20% macaron pastels (the clearly coloured swatches of a 72-colour palette).
 const WHITE_COATS = [['#ffffff', 3], ['#fff8ee', 2], ['#fbf0df', 2], ['#f3f5fa', 1], ['#f1e6d6', 1], ['#e9e7e4', 1]];
 const MACARON_COATS = [
@@ -52,8 +55,8 @@ function alpacaCoat() {
 export const SHEEP_LOOKS = [
   {
     id: 'alpaca', label: 'Alpaca · Nyilonelycompany (CGTrader)',
-    pack: 'assets/alpaca.pack', key: ALPACA_KEY, height: 1.75, hip: 0.29, wool: ['fur'],
-    graze: true, spacing: 1.35, coats: alpacaCoat,
+    pack: 'assets/alpaca.pack', hd: 'assets/alpaca-4k.pack', key: ALPACA_KEY, height: 1.75, hip: 0.29, wool: ['fur'],
+    graze: true, spacing: 1.35, coats: alpacaCoat, style: 'real',
     neck: { pivot: [2.62, 1.3], z: [0.95, 1.3], y: [2.3, 2.85] },
   },
   {
@@ -126,8 +129,9 @@ function applySpecGlossColors(gltf) {
 }
 
 // 羊毛：几乎没有镜面反射，边缘有绒毛透出的柔光（sheen），颜色贴图里的毛卷同时当作凹凸
+// Fur that comes with its own normal map (the alpaca) uses it instead, with its roughness map: matte fur, glossy eyes
 function woolMaterial(src) {
-  return new THREE.MeshPhysicalMaterial({
+  const m = new THREE.MeshPhysicalMaterial({
     name: src.name,
     map: src.map,
     color: src.color,
@@ -137,10 +141,18 @@ function woolMaterial(src) {
     sheen: 1,
     sheenRoughness: 0.7,
     sheenColor: new THREE.Color('#fff4e4'),
-    bumpMap: src.map,
-    bumpScale: 2.6,
     side: src.side,
   });
+  if (src.normalMap) {
+    m.normalMap = src.normalMap;
+    m.normalScale.copy(src.normalScale);
+    m.roughnessMap = src.roughnessMap;
+    m.specularIntensity = 0.5;
+  } else {
+    m.bumpMap = src.map;
+    m.bumpScale = 2.6;
+  }
+  return m;
 }
 
 const inGroup = (o, names) => {
@@ -221,6 +233,7 @@ async function buildTemplate(def) {
     if (def.wool?.includes(o.material.name) && mat.map) mat = woolMaterial(mat);
     if (override) mat.color.set(override[1]);
     if (mat.map) mat.map.anisotropy = 4;
+    if (mat.normalMap) mat.normalMap.anisotropy = 4;
     const isHead = def.headParts ? inGroup(o, def.headParts) : false;
     if (isHead) { geo.computeBoundingBox(); headBox.union(geo.boundingBox); }
     parts.push({ geo, mat, isHead });
@@ -245,6 +258,35 @@ async function buildTemplate(def) {
   return { parts, pivot: neck?.pivot ?? pivot, neck };
 }
 
+// Full-resolution fur only where it pays off: a mouse-and-keyboard computer with a fair amount of memory
+// (four 4K textures' worth of GPU memory is too much to ask of a phone)
+const wantsHD = () => !matchMedia('(hover: none) and (pointer: coarse)').matches && (navigator.deviceMemory ?? 8) >= 4;
+const hdLoads = new Map();
+function loadHD(def, template) {
+  if (!hdLoads.has(def.id)) {
+    hdLoads.set(def.id, (async () => {
+      await new Promise((r) => setTimeout(r, 1500));   // let the meadow get going first
+      try {
+        const gltf = await loadPackedGLTF(def.hd, def.key);
+        let tex = null;
+        gltf.scene.traverse((o) => { if (o.isMesh && !tex) tex = { map: o.material.map, normalMap: o.material.normalMap }; });
+        if (!tex) return null;
+        for (const t of [tex.map, tex.normalMap]) if (t) t.anisotropy = 4;
+        // later looks built from the same template start with the full-resolution textures straight away
+        for (const p of template.parts) {
+          if (p.mat.map && tex.map) p.mat.map = tex.map;
+          if (p.mat.normalMap && tex.normalMap) p.mat.normalMap = tex.normalMap;
+        }
+        return tex;
+      } catch (e) {
+        console.warn('full-resolution fur not loaded:', e);
+        return null;
+      }
+    })());
+  }
+  return hdLoads.get(def.id);
+}
+
 export async function loadLook(id, scene) {
   const def = lookDef(id);
   if (!templates.has(def.id)) templates.set(def.id, buildTemplate(def));
@@ -265,7 +307,7 @@ class ModelLook {
     this.def = def;
     this.pivot = data.pivot;
     this.neck = data.neck;
-    const toon = sheepToonEnabled();
+    const toon = def.style ? def.style === 'toon' : sheepToonEnabled();
     this.meshes = data.parts.map(({ geo, mat, isHead }) => {
       const g = geo.clone();
       const m = mat.clone();
@@ -288,6 +330,19 @@ class ModelLook {
       return mesh;
     });
     this.owners = [];
+    if (def.hd && wantsHD()) loadHD(def, data).then((tex) => { if (tex && !this.disposed) this.useHD(tex); });
+  }
+
+  // the full-resolution fur has arrived: same mesh, sharper colour and normal map
+  useHD({ map, normalMap }) {
+    const old = new Set();
+    for (const mesh of this.meshes) {
+      const { real, toon } = mesh.userData.materials;
+      if (real.map && map) { old.add(real.map); real.map = map; }
+      if (real.normalMap && normalMap) { old.add(real.normalMap); real.normalMap = normalMap; }
+      if (toon.uniforms?.map?.value && map) { old.add(toon.uniforms.map.value); toon.uniforms.map.value = map; }
+    }
+    for (const t of old) if (t !== map && t !== normalMap) t.dispose();   // frees the 2K copies on the GPU
   }
 
   add() {}
@@ -353,6 +408,7 @@ class ModelLook {
   }
 
   dispose() {
+    this.disposed = true;
     for (const m of this.meshes) {
       this.scene.remove(m);
       m.dispose();

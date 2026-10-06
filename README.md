@@ -5,7 +5,9 @@ Made by Claude Opus 5.5.
 > Differences from the original:
 > - The herd is **alpacas** instead of sheep: the CGTrader model "Alpaca Animal" by Nyilonelycompany, recoloured so that about four in five are
 >   white or near-white (ivory, cream, oatmeal…) and one in five wears a pale macaron colour. It ships encrypted in `assets/alpaca.pack`
->   (built by `tools/prepare-alpaca.mjs`, see [CREDITS.md](CREDITS.md)). The alpacas still use the original's sheep bleats.
+>   (2K textures, loaded first) and `assets/alpaca-4k.pack` (the fur at its original 4K, swapped in on desktop), built by
+>   `tools/prepare-alpaca.mjs` (see [CREDITS.md](CREDITS.md)), and is shaded realistically with the model's own normal and roughness maps.
+>   The alpacas still use the original's sheep bleats.
 > - The original's realistic sheep (a CGTrader model licensed to the original author only) isn't included; a procedural sheep
 >   (`src/sheepProcedural.js`) remains as an alternative look in the dev version.
 > - All on-screen text is in English, and a small "credit to @hyraland" line sits at the bottom of the page.
@@ -105,7 +107,7 @@ All of these are static models without skeletons: the legs swing in the vertex s
 - `src/flock.js`: flock behavior (gathering in front of you; grazing / travelling, following the herd, separation / alignment / cohesion; while travelling some sheep stop for a few bites, fall behind and trot to catch up, so the flock slowly churns)
 - `src/sheep.js`: the sheep "rig" (posed by the flock logic) and contact shadows
 - `src/sheepProcedural.js`: the procedural sheep (an alternative look in the dev version)
-- `tools/prepare-alpaca.mjs`, `src/alpacaKey.js`, `assets/alpaca.pack`: the alpaca — poses baked from its skeleton, fur recoloured to white, packed and encrypted
+- `tools/prepare-alpaca.mjs`, `src/alpacaKey.js`, `assets/alpaca.pack`, `assets/alpaca-4k.pack`: the alpaca — poses baked from its skeleton, fur recoloured to white (normal and roughness maps kept), packed and encrypted at 2K plus a 4K fur upgrade
 - `src/sheepPack.js`, `src/sheepKey.js`, `tools/pack-sheep.mjs`: encrypted packing and decrypting loader for the sheep model
 - `src/sheepModels.js`: the herd's looks and the alpacas' coat colours; loading external glTF models, normalizing them, leg swing and head turning (when the head dips or turns, the neck stretches and bends by weight, so head and body never come apart)
 - `src/grass.js`: two layers of short grass that follow the camera (grows in tufts; the two layers alternate blade by blade with no visible seam; gusts of wind roll through and bent grass catches the light; cloud shadows and sun shadows; no grass in the stream)
@@ -129,4 +131,4 @@ All of these are static models without skeletons: the legs swing in the vertex s
 
 ## License
 
-The source code is MIT-licensed (see [LICENSE](LICENSE)). The alpaca model (`assets/alpaca.pack`), the sheep model (`assets/sheep.pack`, not included in this clone) and the sheep sounds (`assets/sounds/`) aren't covered by the MIT license; see [CREDITS.md](CREDITS.md) for their terms.
+The source code is MIT-licensed (see [LICENSE](LICENSE)). The alpaca model (`assets/alpaca.pack`, `assets/alpaca-4k.pack`), the sheep model (`assets/sheep.pack`, not included in this clone) and the sheep sounds (`assets/sounds/`) aren't covered by the MIT license; see [CREDITS.md](CREDITS.md) for their terms.
