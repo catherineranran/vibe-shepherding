@@ -26,14 +26,13 @@ import { ALPACA_KEY } from './alpacaKey.js';
 //   hd        a second encrypted package with the fur's colour and normal map at full resolution: loaded after the
 //             game has started (desktop browsers only) and swapped in
 //   style     'real' or 'toon': this look's shading, whatever the tuning says (the dev panel can still switch it)
-// Alpaca coats: about 80% white variants and 20% macaron pastels (the clearly coloured swatches of a 72-colour palette).
-const WHITE_COATS = [['#ffffff', 3], ['#fff8ee', 2], ['#fbf0df', 2], ['#f3f5fa', 1], ['#f1e6d6', 1], ['#e9e7e4', 1]];
+// Alpaca coats: about 80% white variants and 20% warm macaron pastels (from a 72-colour palette).
+const WHITE_COATS = [['#ffffff', 3], ['#fff8ee', 2], ['#fbf0df', 2], ['#fdfaf4', 1], ['#f1e6d6', 1], ['#e9e7e4', 1]];
+// warm macarons only: pinks, roses, corals, peaches, apricots and butter yellows (no blues, greens or olives)
 const MACARON_COATS = [
-  '#bdc4e2', '#efcdd5', '#ecc8d8', '#f8cac3', '#f7c3bd', '#f8d8c4', '#f8ddb6', '#fcd8b2', '#fee3db', '#fce9c0', '#f0dece',
-  '#f3d3c9', '#f0cdc3', '#f0d5c5', '#e8d9ba', '#f5fea4', '#fffed0', '#f4da98', '#f4c8a0', '#f5b89e', '#f4a5cf', '#f8c1d5',
-  '#f2a6c2', '#f7cfea', '#f5c3b4', '#f2c7c3', '#9ed8dc', '#9dcee9', '#81d7ee', '#f6b5e0', '#dea8d5', '#6be5d8', '#b0d5c9',
-  '#a2dfd6', '#a1dbbc', '#b7c581', '#e4be67', '#cebe6f', '#dbd7b4', '#d8f9bf', '#fdf7c3', '#efbae7', '#b9e3d3', '#e5eacc',
-  '#d1fae8', '#d4f7fd', '#f1dfc7', '#e9cac1', '#cfe2f9', '#bdd7f3', '#a6cad1', '#9cc5e1', '#aed3f3', '#bee8f4',
+  '#efcdd5', '#ecc8d8', '#f8cac3', '#f7c3bd', '#f8d8c4', '#f8ddb6', '#fcd8b2', '#fee3db', '#fce9c0', '#f0dece', '#f3d3c9',
+  '#f0cdc3', '#f0d5c5', '#e8d9ba', '#f4da98', '#f4c8a0', '#f5b89e', '#f4a5cf', '#f8c1d5', '#f2a6c2', '#f7cfea', '#f5c3b4',
+  '#f2c7c3', '#f6b5e0', '#dea8d5', '#e4be67', '#fdf7c3', '#efbae7', '#f1dfc7', '#e9cac1',
 ];
 export const MACARON_SHARE = 0.2;
 const WHITE = new THREE.Color(1, 1, 1);
@@ -45,8 +44,8 @@ function alpacaCoat() {
     coatBag = Array.from({ length: n }, (_, i) => i === 0);
     for (let i = n - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [coatBag[i], coatBag[j]] = [coatBag[j], coatBag[i]]; }
   }
-  // the shading brightens and saturates fur, so the swatches go 30% of the way to white to stay macaron-pale on screen
-  if (coatBag.pop()) return new THREE.Color(MACARON_COATS[Math.floor(Math.random() * MACARON_COATS.length)]).lerp(WHITE, 0.3);
+  // the swatches go 10% of the way to white: pale enough to stay macaron, coloured enough to show under realistic light
+  if (coatBag.pop()) return new THREE.Color(MACARON_COATS[Math.floor(Math.random() * MACARON_COATS.length)]).lerp(WHITE, 0.1);
   let r = Math.random() * WHITE_COATS.reduce((s, [, w]) => s + w, 0);
   for (const [hex, w] of WHITE_COATS) if ((r -= w) <= 0) return new THREE.Color(hex);
   return new THREE.Color('#ffffff');

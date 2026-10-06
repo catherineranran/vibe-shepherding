@@ -4,7 +4,7 @@ Made by Claude Opus 5.5.
 > **vibe-shepherding** is a clone of [hyraland/shepherd](https://github.com/hyraland/shepherd) (MIT), live at **https://ranranli.net/vibe-shepherding/**.
 > Differences from the original:
 > - The herd is **alpacas** instead of sheep: the CGTrader model "Alpaca Animal" by Nyilonelycompany, recoloured so that about four in five are
->   white or near-white (ivory, cream, oatmeal…) and one in five wears a pale macaron colour. It ships encrypted in `assets/alpaca.pack`
+>   white or near-white (ivory, cream, oatmeal…) and one in five wears a warm macaron colour (pink, peach, apricot or butter yellow). It ships encrypted in `assets/alpaca.pack`
 >   (2K textures, loaded first) and `assets/alpaca-4k.pack` (the fur at its original 4K, swapped in on desktop), built by
 >   `tools/prepare-alpaca.mjs` (see [CREDITS.md](CREDITS.md)), and is shaded realistically with the model's own normal and roughness maps.
 >   The alpacas still use the original's sheep bleats.

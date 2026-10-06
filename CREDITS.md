@@ -14,7 +14,7 @@ The commit history is kept as it was, except that `assets/sheep.pack` was remove
   and roughness maps (loaded first), `assets/alpaca-4k.pack` the fur's colour and normal map at the original 4K (swapped in afterwards on
   desktop browsers). The key is in `src/alpacaKey.js`; the page decrypts the packages with WebCrypto and loads them in memory. The original
   `Alpaca_2.glb` stays in `models/alpaca/`, which is git-ignored, and must not be uploaded anywhere public.
-- Each alpaca gets a coat colour at runtime: about four in five are white variants, one in five a pale colour from a 72-colour macaron palette.
+- Each alpaca gets a coat colour at runtime: about four in five are white variants, one in five a warm macaron colour (pinks, peaches, apricots, butter yellows) from a 72-colour palette.
 
 ## Sheep: procedural (`src/sheepProcedural.js`)
 
