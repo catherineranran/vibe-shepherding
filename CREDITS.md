@@ -5,15 +5,14 @@
 This repository is a clone of [hyraland/shepherd](https://github.com/hyraland/shepherd) (*Herding Sheep on the Ili Grassland*, MIT License, © 2026 CocoNana).
 The commit history is kept as it was, except that `assets/sheep.pack` was removed (see the CGTrader section below).
 
-## Alpacas: CGTrader Royalty Free License (`assets/alpaca.pack`, `assets/alpaca-4k.pack`)
+## Alpacas: CGTrader Royalty Free License (`assets/alpaca.pack`)
 
 - "Alpaca Animal" by Nyilonelycompany — https://www.cgtrader.com/3d-models/animal/mammal/alpaca-animal (bought by the site owner).
 - License: **CGTrader Royalty Free License**. The model may be used in this site but **its files may not be redistributed**, so the repository only holds an
-  encrypted packages: `tools/prepare-alpaca.mjs` bakes three static poses from the model's skeleton (standing, head low, eating), recolours the fur
-  to white, drops the skin and animations, and encrypts the result with AES-256-GCM: `assets/alpaca.pack` holds the mesh with 2K colour, normal
-  and roughness maps (loaded first), `assets/alpaca-4k.pack` the fur's colour and normal map at the original 4K (swapped in afterwards on
-  desktop browsers). The key is in `src/alpacaKey.js`; the page decrypts the packages with WebCrypto and loads them in memory. The original
-  `Alpaca_2.glb` stays in `models/alpaca/`, which is git-ignored, and must not be uploaded anywhere public.
+  encrypted package: `tools/prepare-alpaca.mjs` bakes three static poses from the model's skeleton (standing, head low, eating), recolours the fur
+  to white, drops the skin and animations, keeps the colour, normal and roughness maps at 2K, and encrypts the result with AES-256-GCM into
+  `assets/alpaca.pack` (key in `src/alpacaKey.js`); the page decrypts it with WebCrypto and loads it in memory. The original `Alpaca_2.glb`
+  stays in `models/alpaca/`, which is git-ignored, and must not be uploaded anywhere public.
 - Each alpaca gets a coat colour at runtime: about four in five are white variants, one in five a warm macaron colour (pinks, peaches, apricots, butter yellows) from a 72-colour palette.
 
 ## Sheep: procedural (`src/sheepProcedural.js`)

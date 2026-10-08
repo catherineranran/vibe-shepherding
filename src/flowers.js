@@ -32,6 +32,9 @@ void main() {
   float r1 = aFlower.z, r2 = aFlower.w;
   float dist = length(local);
   float fade = 1.0 - smoothstep(uSize * 0.3, uSize * 0.46, dist);
+  // flowers too far away or out of view (sideways or behind) are skipped before any of the work below
+  vec4 cp = projectionMatrix * viewMatrix * vec4(wxz.x, uCenter.y - 1.5, wxz.y, 1.0);
+  if (fade < 0.001 || cp.w < -1.0 || abs(cp.x) > cp.w * 1.15 + 1.2) { gl_Position = vec4(0.0, 0.0, 2.0, 1.0); return; }
 
   // 只在花丛里出现；溪水里和岸边没有
   float cover = flowerCover(wxz);
@@ -231,5 +234,6 @@ export function createFlowers(U, { count, size }) {
   });
   const mesh = new THREE.Mesh(g, mat);
   mesh.frustumCulled = false;
+  mesh.userData.setDensity = (share) => { g.instanceCount = Math.max(1, Math.round(count * share)); };
   return mesh;
 }

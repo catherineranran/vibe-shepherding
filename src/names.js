@@ -27,7 +27,7 @@ const CSS = `
 #ym-namebox {
   position: fixed; left: 14px; bottom: 14px; z-index: 20; box-sizing: border-box;
   width: min(300px, calc(100vw - 28px)); padding: 10px 12px 9px; border-radius: 14px;
-  background: rgba(255,255,255,.62); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  background: rgba(255,255,255,.8);   /* no backdrop blur: blurring the moving meadow behind it costs every frame */
   box-shadow: 0 6px 24px rgba(20,40,70,.16);
   font: 12.5px/1.45 -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", sans-serif; color: #24323f;
   opacity: .88; transition: opacity .25s;

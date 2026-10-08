@@ -5,8 +5,11 @@ Made by Claude Opus 5.5.
 > Differences from the original:
 > - The herd is **alpacas** instead of sheep: the CGTrader model "Alpaca Animal" by Nyilonelycompany, recoloured so that about four in five are
 >   white or near-white (ivory, cream, oatmeal…) and one in five wears a warm macaron colour (pink, peach, apricot or butter yellow). It ships encrypted in `assets/alpaca.pack`
->   (2K textures, loaded first) and `assets/alpaca-4k.pack` (the fur at its original 4K, swapped in on desktop), built by
->   `tools/prepare-alpaca.mjs` (see [CREDITS.md](CREDITS.md)), and is shaded realistically with the model's own normal and roughness maps.
+>   (2K textures), built by `tools/prepare-alpaca.mjs` (see [CREDITS.md](CREDITS.md)), and is shaded realistically with the model's own
+>   normal and roughness maps.
+> - **Smoother on ordinary computers:** grass blades and flowers out of view are skipped before the GPU does any work on them (the grass
+>   is most of the cost; nothing visible changes), and the quality level (sharpness, how much grass) is chosen while the loading veil is
+>   still up by timing real frames, rather than dropping quality in view a few seconds in. See "Quality levels" below.
 >   The alpacas still use the original's sheep bleats.
 > - The original's realistic sheep (a CGTrader model licensed to the original author only) isn't included; a procedural sheep
 >   (`src/sheepProcedural.js`) remains as an alternative look in the dev version.
@@ -58,6 +61,15 @@ Visitors can name alpacas after whoever annoyed them today. The names are shared
 - The sheet itself can stay private: the script runs as its owner, and the page only ever sees the web app URL.
 - After changing the script, redeploy it from *Deploy → Manage deployments → Edit → Version: New version* so the URL stays the same.
 
+## Quality levels
+
+The meadow is drawn at one of four levels (`LEVELS` in `src/main.js`): 1.5 / 1.25 / 1 / 0.8 pixels per CSS pixel (never more than the
+screen has) with all / 65% / 42% / 28% of the grass blades (fewer blades are drawn a little wider) and fewer flowers. While the loading
+veil is up the game draws real frames and times them, on the GPU's own clock where the browser allows it (Chrome) or by the gaps between
+frames otherwise, and steps down until a frame fits in about 12 ms of GPU time (or 21 ms between frames). It starts at the top level on
+computers and one below on phones and tablets. If frames later keep coming at under 25 fps for a couple of seconds, it steps down once
+more. A browser that caps the frame rate to save battery is recognised (a lighter level isn't any faster) and doesn't push the level down.
+
 ## The endless valley
 
 - You can keep walking along the valley (east–west) forever: terrain and trees are generated around you in 256 m chunks as you go.
@@ -107,7 +119,7 @@ All of these are static models without skeletons: the legs swing in the vertex s
 - `src/flock.js`: flock behavior (gathering in front of you; grazing / travelling, following the herd, separation / alignment / cohesion; while travelling some sheep stop for a few bites, fall behind and trot to catch up, so the flock slowly churns)
 - `src/sheep.js`: the sheep "rig" (posed by the flock logic) and contact shadows
 - `src/sheepProcedural.js`: the procedural sheep (an alternative look in the dev version)
-- `tools/prepare-alpaca.mjs`, `src/alpacaKey.js`, `assets/alpaca.pack`, `assets/alpaca-4k.pack`: the alpaca — poses baked from its skeleton, fur recoloured to white (normal and roughness maps kept), packed and encrypted at 2K plus a 4K fur upgrade
+- `tools/prepare-alpaca.mjs`, `src/alpacaKey.js`, `assets/alpaca.pack`: the alpaca — poses baked from its skeleton, fur recoloured to white (normal and roughness maps kept, 2K), packed and encrypted
 - `src/sheepPack.js`, `src/sheepKey.js`, `tools/pack-sheep.mjs`: encrypted packing and decrypting loader for the sheep model
 - `src/sheepModels.js`: the herd's looks and the alpacas' coat colours; loading external glTF models, normalizing them, leg swing and head turning (when the head dips or turns, the neck stretches and bends by weight, so head and body never come apart)
 - `src/grass.js`: two layers of short grass that follow the camera (grows in tufts; the two layers alternate blade by blade with no visible seam; gusts of wind roll through and bent grass catches the light; cloud shadows and sun shadows; no grass in the stream)
@@ -131,4 +143,4 @@ All of these are static models without skeletons: the legs swing in the vertex s
 
 ## License
 
-The source code is MIT-licensed (see [LICENSE](LICENSE)). The alpaca model (`assets/alpaca.pack`, `assets/alpaca-4k.pack`), the sheep model (`assets/sheep.pack`, not included in this clone) and the sheep sounds (`assets/sounds/`) aren't covered by the MIT license; see [CREDITS.md](CREDITS.md) for their terms.
+The source code is MIT-licensed (see [LICENSE](LICENSE)). The alpaca model (`assets/alpaca.pack`), the sheep model (`assets/sheep.pack`, not included in this clone) and the sheep sounds (`assets/sounds/`) aren't covered by the MIT license; see [CREDITS.md](CREDITS.md) for their terms.

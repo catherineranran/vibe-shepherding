@@ -30,6 +30,21 @@ void main() {
   float r1 = aBlade.z;
   float r2 = aBlade.w;
 
+  // Skip the blades nobody can see before doing any of the work below: past the fade-out (or inside the fade-in),
+  // except the few whose random threshold keeps them alive there, and blades off to the side or behind the camera.
+  // The instances are ordered so that neighbours in the buffer are neighbours on the ground (see scatter), so whole
+  // batches of vertices skip together on the GPU. Nothing visible changes; most of the grass's cost goes away.
+  {
+    float d0 = length(local);   // the clumping below moves a blade by less than 0.8 m
+    bool faded = fract(r1 * 7.31 + r2 * 3.17) >= 0.06
+      && (d0 > uFadeOut.y + 0.8 || (uFadeIn.x >= 0.0 && d0 < uFadeIn.x - 0.8));
+    vec4 cp = projectionMatrix * viewMatrix * vec4(wxz.x, uCenter.y - 1.5, wxz.y, 1.0);
+    if (faded || cp.w < -1.0 || abs(cp.x) > cp.w * 1.15 + 1.2) {
+      gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
+      return;
+    }
+  }
+
   // 一丛一丛：叶片被拉向最近的丛心（丛心在格子里随机抖动，取周围四格里最近的那个，
   // 形成不规则的泰森多边形，不会排成行）
   const float CS = 0.45;
@@ -163,14 +178,28 @@ function bladeGeometry(segs) {
   return g;
 }
 
+// Random blades, ordered for the GPU: split into ten random tenths (so drawing only the first part of the buffer
+// still thins the meadow evenly), and inside each tenth sorted row by row over a fine grid, so that blades next to
+// each other in the buffer are next to each other on the ground and get skipped together when out of view.
+const SLICES = 10;
 function scatter(count, size, seed) {
   const rng = mulberry32(seed);
+  const raw = new Float32Array(count * 4);
+  for (let i = 0; i < count * 4; i++) raw[i] = rng() * (i % 4 < 2 ? size : 1);
+  const cells = Math.max(1, Math.round(size / 0.5));
+  const key = new Uint32Array(count);   // slice-major, then grid row, then grid column (counting sort, O(n))
+  for (let i = 0; i < count; i++) {
+    const cx = Math.min(cells - 1, Math.floor((raw[i * 4] / size) * cells));
+    const cy = Math.min(cells - 1, Math.floor((raw[i * 4 + 1] / size) * cells));
+    key[i] = (i % SLICES) * cells * cells + cy * cells + cx;
+  }
+  const start = new Uint32Array(SLICES * cells * cells + 1);
+  for (let i = 0; i < count; i++) start[key[i] + 1]++;
+  for (let k = 1; k < start.length; k++) start[k] += start[k - 1];
   const a = new Float32Array(count * 4);
   for (let i = 0; i < count; i++) {
-    a[i * 4] = rng() * size;
-    a[i * 4 + 1] = rng() * size;
-    a[i * 4 + 2] = rng();
-    a[i * 4 + 3] = rng();
+    const j = start[key[i]]++;
+    a.set(raw.subarray(i * 4, i * 4 + 4), j * 4);
   }
   return a;
 }
@@ -195,5 +224,10 @@ export function createGrass(U, { count, size, fadeIn = [-1, 0], fadeOut, width, 
   const mesh = new THREE.Mesh(g, mat);
   mesh.frustumCulled = false;
   mesh.userData.maxCount = count;
+  // draw only a share of the blades (a lower quality level), each a little wider so the meadow stays as full
+  mesh.userData.setDensity = (share) => {
+    g.instanceCount = Math.max(1, Math.round(count * share));
+    mat.uniforms.uWidth.value = width * Math.min(1.6, 1 / Math.sqrt(share));
+  };
   return mesh;
 }

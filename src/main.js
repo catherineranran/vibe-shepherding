@@ -32,7 +32,7 @@ const canvas = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-let dpr = Math.min(window.devicePixelRatio || 1, coarse ? 1.5 : 1.75);
+let dpr = Math.min(window.devicePixelRatio || 1, 1.5);   // set by the quality level (see LEVELS below)
 
 const scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(PALETTE.fog, FOG_DENSITY);
@@ -395,21 +395,90 @@ function resize() {
 addEventListener('resize', resize);
 resize();
 
-// 头几秒测一下帧率，跑不动就降分辨率、减草（前 1.5 秒是着色器编译，不算）
-const perf = { warm: 0, t: 0, frames: 0, done: false };
-function adapt(dt) {
-  if (perf.done) return;
-  perf.warm += dt;
-  if (perf.warm < 1.5) return;
-  perf.t += dt; perf.frames++;
-  if (perf.t < 3) return;
-  const fps = perf.frames / perf.t;
-  if (fps < 45) {
-    if (dpr > 1) { dpr = 1; resize(); }
-    grassNear.geometry.instanceCount = Math.round(grassNear.userData.maxCount * 0.6);
-    grassMid.geometry.instanceCount = Math.round(grassMid.userData.maxCount * 0.7);
+// —— Quality ——
+// Four levels: how many pixels per CSS pixel the scene is drawn with, and how much of the grass and how many of the
+// flowers are drawn (fewer blades come out a little wider, so the meadow stays full). The level is chosen while the
+// loading veil is still up, by timing real frames of the scene: on the GPU's own clock where the browser offers it
+// (Chrome), otherwise by the time between frames. So the meadow appears at a level the computer can keep up with,
+// instead of starting too heavy and visibly dropping quality a few seconds in. If it still can't keep up later
+// (say, a bigger herd), it steps down once more.
+const LEVELS = [
+  { dpr: 1.5, grass: 1, flowers: 1 },
+  { dpr: 1.25, grass: 0.65, flowers: 0.8 },
+  { dpr: 1, grass: 0.42, flowers: 0.6 },
+  { dpr: 0.8, grass: 0.28, flowers: 0.45 },
+];
+const GPU_BUDGET = 12;    // ms of GPU work per frame: leaves room for 60 fps
+const GAP_BUDGET = 21;    // ms between frames, when the GPU's clock isn't available: about 48 fps
+// ?quality=high|medium|low|lowest picks a level by hand (no timing, no stepping down)
+const FORCED = ['high', 'medium', 'low', 'lowest'].indexOf(new URLSearchParams(location.search).get('quality'));
+let level = FORCED >= 0 ? FORCED : coarse ? 1 : 0;
+function applyLevel(i) {
+  level = i;
+  const L = LEVELS[i];
+  dpr = Math.min(window.devicePixelRatio || 1, L.dpr);
+  grassNear.userData.setDensity(L.grass);
+  grassMid.userData.setDensity(Math.min(1, L.grass * 1.15));
+  flowers.userData.setDensity(L.flowers);
+  resize();
+}
+applyLevel(level);
+
+// GPU time per frame, measured with timer queries (results arrive a few frames later)
+const gpuTimer = (() => {
+  const gl = renderer.getContext();
+  const ext = gl.getExtension('EXT_disjoint_timer_query_webgl2');
+  if (!ext) return null;
+  const pending = [];
+  let q = null;
+  return {
+    begin() { q = gl.createQuery(); gl.beginQuery(ext.TIME_ELAPSED_EXT, q); },
+    end(tag) { gl.endQuery(ext.TIME_ELAPSED_EXT); pending.push([q, tag]); q = null; },
+    poll(fn) {
+      while (pending.length && gl.getQueryParameter(pending[0][0], gl.QUERY_RESULT_AVAILABLE)) {
+        const [done, tag] = pending.shift();
+        if (!gl.getParameter(ext.GPU_DISJOINT_EXT)) fn(gl.getQueryParameter(done, gl.QUERY_RESULT) / 1e6, tag);
+        gl.deleteQuery(done);
+      }
+    },
+  };
+})();
+
+const median = (a) => [...a].sort((x, y) => x - y)[a.length >> 1];
+const tune = { calibrating: FORCED < 0, frames: 0, gpu: [], gaps: [], started: 0, prev: null, watch: [], cooldown: 0 };
+// called once per frame with the time since the previous frame (ms); returns true once the level is settled
+function settleLevel(gap) {
+  if (gpuTimer) gpuTimer.poll((ms, tag) => { if (tag === level) tune.gpu.push(ms); });
+  tune.frames++;
+  if (tune.frames <= 3) return false;   // the first frames compile shaders and upload textures: not counted
+  tune.started ||= performance.now();
+  if (gap < 250) tune.gaps.push(gap);
+  const useGpu = tune.gpu.length >= 6;
+  const samples = useGpu ? tune.gpu : tune.gaps;
+  const budget = useGpu ? GPU_BUDGET : GAP_BUDGET;
+  const enough = samples.length >= 10 || (samples.length >= 4 && median(samples) > budget * 2);
+  const outOfTime = performance.now() - tune.started > 4000;
+  if (!enough && !outOfTime) return false;
+  const m = samples.length ? median(samples) : 0;
+  // timed by the gaps between frames, a lighter level that comes out no faster means the browser is holding the
+  // frame rate down (battery saving often caps it at 30 fps), not the computer: go back up and stop there
+  if (!useGpu && tune.prev && !tune.prev.useGpu && m > tune.prev.m * 0.85) { applyLevel(tune.prev.level); return true; }
+  if (m > budget && level < LEVELS.length - 1 && !outOfTime) {
+    // too slow: one level down (two if far too slow) and measure again
+    tune.prev = { level, m, useGpu };
+    applyLevel(Math.min(LEVELS.length - 1, level + (m > budget * 2.2 ? 2 : 1)));
+    tune.frames = 1; tune.gpu = []; tune.gaps = [];
+    return false;
   }
-  perf.done = true;
+  return true;
+}
+// after the veil is gone: if frames keep coming really slowly (under 25 fps) for a while, step down one level
+function watchLevel(gap, dt) {
+  if (gap > 250 || FORCED >= 0) return;   // back from another tab, or a level picked by hand
+  tune.watch.push(gap);
+  if (tune.watch.length > 60) tune.watch.shift();
+  if ((tune.cooldown -= dt) > 0 || tune.watch.length < 60 || level >= LEVELS.length - 1) return;
+  if (median(tune.watch) > 40) { applyLevel(level + 1); tune.watch = []; tune.cooldown = 6; }
 }
 
 // names that visitors give to alpacas (box at the bottom left, see names.js)
@@ -417,6 +486,7 @@ const names = createNames({ flock, camera, addSheep, maxSheep: MAX_SHEEP });
 
 const clock = new THREE.Clock();
 let first = true;
+let lastFrame = 0;
 
 function frame() {
   const dt = Math.min(clock.getDelta(), 0.05);
@@ -441,20 +511,32 @@ function frame() {
   sound.update(dt, { camera, walker, flock, bees });
 
   followShadow(tmp.copy(camForward()).multiplyScalar(9).add(camera.position));
+  const timing = gpuTimer && tune.calibrating;
+  if (timing) gpuTimer.begin();
   post.render(renderer, scene, camera);
+  if (timing) gpuTimer.end(level);
   if (sun.shadow.map && !U.uShadowOn.value) {
     U.uShadowMap.value = sun.shadow.map.texture;
     U.uShadowOn.value = 1;
   }
 
-  adapt(dt);
+  const now = performance.now(), gap = lastFrame ? now - lastFrame : 0;
+  lastFrame = now;
+  if (tune.calibrating) {
+    if (settleLevel(gap)) {
+      tune.calibrating = false;
+      document.getElementById('veil').classList.add('gone');
+    }
+  } else watchLevel(gap, dt);
   if (first) {
     first = false;
-    requestAnimationFrame(() => document.getElementById('veil').classList.add('gone'));
+    if (!tune.calibrating) requestAnimationFrame(() => document.getElementById('veil').classList.add('gone'));
     if (DEV) showDev(`${SHEEP_LOOKS.findIndex((d) => d.id === lookId) + 1} · ${SHEEP_LOOKS.find((d) => d.id === lookId).label}  (keys 1–${SHEEP_LOOKS.length} / M switch the sheep model)`);
   }
   requestAnimationFrame(frame);
 }
+// build the shaders before the first frame without freezing the page (in parallel, where the browser can)
+await renderer.compileAsync(scene, camera).catch(() => {});
 requestAnimationFrame(frame);
 
 createMenu({ sound, maxSheep: MAX_SHEEP, right: DEV ? 262 : 14 });   // 开发版里让开调节面板
