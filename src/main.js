@@ -534,8 +534,6 @@ function frame() {
   }
   requestAnimationFrame(frame);
 }
-// build the shaders before the first frame without freezing the page (in parallel, where the browser can)
-await renderer.compileAsync(scene, camera).catch(() => {});
 requestAnimationFrame(frame);
 
 createMenu({ sound, maxSheep: MAX_SHEEP, right: DEV ? 262 : 14 });   // 开发版里让开调节面板
