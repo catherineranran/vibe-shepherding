@@ -399,7 +399,7 @@ resize();
 // Four levels: how many pixels per CSS pixel the scene is drawn with, and how much of the grass and how many of the
 // flowers are drawn (fewer blades come out a little wider, so the meadow stays full). The level is chosen while the
 // loading veil is still up, by timing real frames of the scene: on the GPU's own clock where the browser offers it
-// (Chrome), otherwise by the time between frames. So the meadow appears at a level the computer can keep up with,
+// (Chrome; just the scene's drawing, see Post.render), otherwise by the time between frames. So the meadow appears at a level the computer can keep up with,
 // instead of starting too heavy and visibly dropping quality a few seconds in. If it still can't keep up later
 // (say, a bigger herd), it steps down once more.
 const LEVELS = [
@@ -408,7 +408,7 @@ const LEVELS = [
   { dpr: 1, grass: 0.42, flowers: 0.6 },
   { dpr: 0.8, grass: 0.28, flowers: 0.45 },
 ];
-const GPU_BUDGET = 12;    // ms of GPU work per frame: leaves room for 60 fps
+const GPU_BUDGET = 10;    // ms of GPU time for drawing the scene: with the glow and the rest, room for 60 fps
 const GAP_BUDGET = 21;    // ms between frames, when the GPU's clock isn't available: about 48 fps
 // ?quality=high|medium|low|lowest picks a level by hand (no timing, no stepping down)
 const FORCED = ['high', 'medium', 'low', 'lowest'].indexOf(new URLSearchParams(location.search).get('quality'));
@@ -443,6 +443,8 @@ const gpuTimer = (() => {
     },
   };
 })();
+
+const sceneTimer = gpuTimer && { begin: () => gpuTimer.begin(), end: () => gpuTimer.end(level) };
 
 const median = (a) => [...a].sort((x, y) => x - y)[a.length >> 1];
 const tune = { calibrating: FORCED < 0, frames: 0, gpu: [], gaps: [], started: 0, prev: null, watch: [], cooldown: 0 };
@@ -511,10 +513,7 @@ function frame() {
   sound.update(dt, { camera, walker, flock, bees });
 
   followShadow(tmp.copy(camForward()).multiplyScalar(9).add(camera.position));
-  const timing = gpuTimer && tune.calibrating;
-  if (timing) gpuTimer.begin();
-  post.render(renderer, scene, camera);
-  if (timing) gpuTimer.end(level);
+  post.render(renderer, scene, camera, gpuTimer && tune.calibrating ? sceneTimer : null);
   if (sun.shadow.map && !U.uShadowOn.value) {
     U.uShadowMap.value = sun.shadow.map.texture;
     U.uShadowOn.value = 1;

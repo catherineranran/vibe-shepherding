@@ -187,9 +187,13 @@ export class Post {
     this.mat.uniforms.tBloom.value = this.bloom.texture;
   }
 
-  render(renderer, scene, camera) {
+  // `timer` (optional, { begin(), end() }) brackets just the scene's own drawing: the quality level is picked by how
+  // long that takes on the GPU (the glow and tone mapping passes cost about the same at every level)
+  render(renderer, scene, camera, timer = null) {
     renderer.setRenderTarget(this.rt);
+    timer?.begin();
     renderer.render(scene, camera);
+    timer?.end();
     this.mat.uniforms.uBloom.value = bloomUniform.value * 1.2;
     if (bloomUniform.value > 0.001) this.bloom.render(renderer, this.rt.texture);
     renderer.setRenderTarget(null);

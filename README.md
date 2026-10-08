@@ -66,7 +66,7 @@ Visitors can name alpacas after whoever annoyed them today. The names are shared
 The meadow is drawn at one of four levels (`LEVELS` in `src/main.js`): 1.5 / 1.25 / 1 / 0.8 pixels per CSS pixel (never more than the
 screen has) with all / 65% / 42% / 28% of the grass blades (fewer blades are drawn a little wider) and fewer flowers. While the loading
 veil is up the game draws real frames and times them, on the GPU's own clock where the browser allows it (Chrome) or by the gaps between
-frames otherwise, and steps down until a frame fits in about 12 ms of GPU time (or 21 ms between frames). It starts at the top level on
+frames otherwise, and steps down until drawing the scene takes at most about 10 ms of GPU time (or frames come at most 21 ms apart). It starts at the top level on
 computers and one below on phones and tablets. If frames later keep coming at under 25 fps for a couple of seconds, it steps down once
 more. A browser that caps the frame rate to save battery is recognised (a lighter level isn't any faster) and doesn't push the level down.
 
