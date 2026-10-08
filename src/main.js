@@ -402,13 +402,14 @@ resize();
 // (Chrome; just the scene's drawing, see Post.render), otherwise by the time between frames. So the meadow appears at a level the computer can keep up with,
 // instead of starting too heavy and visibly dropping quality a few seconds in. If it still can't keep up later
 // (say, a bigger herd), it steps down once more.
+// `trees`: how far out the spruces are drawn in full detail (further away they use a simpler model)
 const LEVELS = [
-  { dpr: 1.5, grass: 1, flowers: 1 },
-  { dpr: 1.25, grass: 0.65, flowers: 0.8 },
-  { dpr: 1, grass: 0.42, flowers: 0.6 },
-  { dpr: 0.8, grass: 0.28, flowers: 0.45 },
+  { dpr: 1.5, grass: 1, flowers: 1, trees: 450 },
+  { dpr: 1.25, grass: 0.65, flowers: 0.8, trees: 340 },
+  { dpr: 1, grass: 0.42, flowers: 0.6, trees: 240 },
+  { dpr: 0.8, grass: 0.28, flowers: 0.45, trees: 160 },
 ];
-const GPU_BUDGET = 10;    // ms of GPU time for drawing the scene: with the glow and the rest, room for 60 fps
+const GPU_BUDGET = 11;    // ms of GPU time for drawing the scene: with the glow and the rest, room for 60 fps
 const GAP_BUDGET = 21;    // ms between frames, when the GPU's clock isn't available: about 48 fps
 // ?quality=high|medium|low|lowest picks a level by hand (no timing, no stepping down)
 const FORCED = ['high', 'medium', 'low', 'lowest'].indexOf(new URLSearchParams(location.search).get('quality'));
@@ -420,6 +421,7 @@ function applyLevel(i) {
   grassNear.userData.setDensity(L.grass);
   grassMid.userData.setDensity(Math.min(1, L.grass * 1.15));
   flowers.userData.setDensity(L.flowers);
+  world.treeDetail = L.trees;
   resize();
 }
 applyLevel(level);
@@ -452,7 +454,7 @@ const tune = { calibrating: FORCED < 0, frames: 0, gpu: [], gaps: [], started: 0
 function settleLevel(gap) {
   if (gpuTimer) gpuTimer.poll((ms, tag) => { if (tag === level) tune.gpu.push(ms); });
   tune.frames++;
-  if (tune.frames <= 3) return false;   // the first frames compile shaders and upload textures: not counted
+  if (tune.frames <= 5) return false;   // the first frames compile shaders and upload textures: not counted
   tune.started ||= performance.now();
   if (gap < 250) tune.gaps.push(gap);
   const useGpu = tune.gpu.length >= 6;

@@ -19,6 +19,7 @@ export class World {
     scene.add(this.group);
     this.chunks = new Map();
     this.obstacles = []; // 附近的树（共享数组，人和羊都引用它）
+    this.treeDetail = TREE_DETAIL;   // lower quality levels use the detailed spruces only closer by (see main.js)
     this._obstacleKey = '';
   }
 
@@ -43,7 +44,7 @@ export class World {
         const seg = this.segFor(d);
         const c = this.chunks.get(key);
         const wantTrees = d < TREE_RADIUS;
-        const detail = d < TREE_DETAIL;
+        const detail = d < this.treeDetail;
         if (!c || c.seg !== seg || (wantTrees && (c.trees === undefined || c.treeDetail !== detail)) || (!wantTrees && c.trees)) {
           todo.push({ key, i, j, seg, d, wantTrees, detail, dense: d < 450 });
         }

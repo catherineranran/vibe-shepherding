@@ -30,7 +30,7 @@ const WHITE_COATS = [['#ffffff', 3], ['#fff8ee', 2], ['#fbf0df', 2], ['#fdfaf4',
 const MACARON_COATS = [
   '#efcdd5', '#ecc8d8', '#f8cac3', '#f7c3bd', '#f8d8c4', '#f8ddb6', '#fcd8b2', '#fee3db', '#fce9c0', '#f0dece', '#f3d3c9',
   '#f0cdc3', '#f0d5c5', '#e8d9ba', '#f4da98', '#f4c8a0', '#f5b89e', '#f4a5cf', '#f8c1d5', '#f2a6c2', '#f7cfea', '#f5c3b4',
-  '#f2c7c3', '#f6b5e0', '#dea8d5', '#e4be67', '#fdf7c3', '#efbae7', '#f1dfc7', '#e9cac1',
+  '#f2c7c3', '#f6b5e0', '#dea8d5', '#fdf7c3', '#efbae7', '#f1dfc7', '#e9cac1',
 ];
 export const MACARON_SHARE = 0.2;
 const WHITE = new THREE.Color(1, 1, 1);
