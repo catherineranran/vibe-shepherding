@@ -467,6 +467,8 @@ function settleLevel(gap) {
   // timed by the gaps between frames, a lighter level that comes out no faster means the browser is holding the
   // frame rate down (battery saving often caps it at 30 fps), not the computer: go back up and stop there
   if (!useGpu && tune.prev && !tune.prev.useGpu && m > tune.prev.m * 0.85) { applyLevel(tune.prev.level); return true; }
+  // out of time with frames far too slow to measure properly: go straight to the lightest level
+  if (outOfTime && m > budget * 2 && level < LEVELS.length - 1) { applyLevel(LEVELS.length - 1); return true; }
   if (m > budget && level < LEVELS.length - 1 && !outOfTime) {
     // too slow: one level down (two if far too slow) and measure again
     tune.prev = { level, m, useGpu };
