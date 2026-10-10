@@ -5,8 +5,8 @@ Made by Claude Opus 5.5.
 > Differences from the original:
 > - The herd is **alpacas** instead of sheep: the CGTrader model "Alpaca Animal" by Nyilonelycompany, recoloured so that about four in five are
 >   white or near-white (ivory, cream, oatmeal…) and one in five wears a warm macaron colour (pink, peach, apricot or butter yellow). It ships encrypted in `assets/alpaca.pack`
->   (2K textures), built by `tools/prepare-alpaca.mjs` (see [CREDITS.md](CREDITS.md)), and is shaded realistically with the model's own
->   normal and roughness maps.
+>   (1.1 MB: 1K colour and normal maps), built by `tools/prepare-alpaca.mjs` (see [CREDITS.md](CREDITS.md)), and is lit with the model's
+>   own normal map on a matte material (no highlights: cheap, and no specular spikes for the glow to spread).
 > - **Smoother on ordinary computers:** grass blades and flowers out of view are skipped before the GPU does any work on them (the grass
 >   is most of the cost; nothing visible changes), and the quality level (sharpness, how much grass) is chosen while the loading veil is
 >   still up by timing real frames, rather than dropping quality in view a few seconds in. See "Quality levels" below.
@@ -120,7 +120,7 @@ All of these are static models without skeletons: the legs swing in the vertex s
 - `src/flock.js`: flock behavior (gathering in front of you; grazing / travelling, following the herd, separation / alignment / cohesion; while travelling some sheep stop for a few bites, fall behind and trot to catch up, so the flock slowly churns)
 - `src/sheep.js`: the sheep "rig" (posed by the flock logic) and contact shadows
 - `src/sheepProcedural.js`: the procedural sheep (an alternative look in the dev version)
-- `tools/prepare-alpaca.mjs`, `src/alpacaKey.js`, `assets/alpaca.pack`: the alpaca — poses baked from its skeleton, fur recoloured to white (normal and roughness maps kept, 2K), packed and encrypted
+- `tools/prepare-alpaca.mjs`, `src/alpacaKey.js`, `assets/alpaca.pack`: the alpaca — poses baked from its skeleton, fur recoloured to white (colour and normal maps at 1K), packed and encrypted
 - `src/sheepPack.js`, `src/sheepKey.js`, `tools/pack-sheep.mjs`: encrypted packing and decrypting loader for the sheep model
 - `src/sheepModels.js`: the herd's looks and the alpacas' coat colours; loading external glTF models, normalizing them, leg swing and head turning (when the head dips or turns, the neck stretches and bends by weight, so head and body never come apart)
 - `src/grass.js`: two layers of short grass that follow the camera (grows in tufts; the two layers alternate blade by blade with no visible seam; gusts of wind roll through and bent grass catches the light; cloud shadows and sun shadows; no grass in the stream)

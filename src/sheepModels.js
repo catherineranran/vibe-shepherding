@@ -126,14 +126,12 @@ function applySpecGlossColors(gltf) {
 }
 
 // 羊毛：几乎没有镜面反射，边缘有绒毛透出的柔光（sheen），颜色贴图里的毛卷同时当作凹凸
-// Fur that comes with its own normal map (the alpaca) uses it instead, with its roughness map (matte fur, glossy
-// eyes), on a plain standard material: the sheen barely shows on fur this detailed and costs GPU time on every pixel
+// Fur that comes with its own normal map (the alpaca) uses it instead, on a matte (Lambert) material: no highlights
+// at all, so it's cheap, and the glossy eyes can't throw specular spikes too bright for the HDR buffer (those came
+// out as flickering black boxes once the glow pass spread them)
 function woolMaterial(src) {
   if (src.normalMap) {
-    const m = new THREE.MeshStandardMaterial({
-      name: src.name, map: src.map, color: src.color, side: src.side,
-      normalMap: src.normalMap, roughnessMap: src.roughnessMap, roughness: 1, metalness: 0,
-    });
+    const m = new THREE.MeshLambertMaterial({ name: src.name, map: src.map, color: src.color, side: src.side, normalMap: src.normalMap });
     m.normalScale.copy(src.normalScale);
     return m;
   }

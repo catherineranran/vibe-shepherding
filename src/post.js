@@ -36,8 +36,12 @@ float dither(vec2 p) {
   return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453) - 0.5;
 }
 
+// a NaN or an overflow (half floats top out at 65504) would come out as a black pixel, and spread by the glow, as a
+// flickering black box: replace NaN with black, clamp the rest to a range no real highlight needs to exceed
+vec3 safe(vec3 c) { return clamp(mix(c, vec3(0.0), isnan(c)), 0.0, 256.0); }
+
 void main() {
-  vec3 hdr = texture2D(tDiffuse, vUv).rgb + texture2D(tBloom, vUv).rgb * uBloom;
+  vec3 hdr = safe(texture2D(tDiffuse, vUv).rgb) + safe(texture2D(tBloom, vUv).rgb) * uBloom;
   vec3 col = toSRGB(clamp(neutral(hdr), 0.0, 1.0));
   col += dither(gl_FragCoord.xy) / 255.0;
   gl_FragColor = vec4(col, 1.0);
@@ -55,7 +59,8 @@ uniform vec2 uTexel;
 uniform float uThreshold;
 uniform float uFirst;
 varying vec2 vUv;
-vec3 tap(float x, float y) { return texture2D(tSrc, vUv + vec2(x, y) * uTexel).rgb; }
+// (the same guard as the final pass, so one bad pixel can't spread into a block)
+vec3 tap(float x, float y) { vec3 c = texture2D(tSrc, vUv + vec2(x, y) * uTexel).rgb; return clamp(mix(c, vec3(0.0), isnan(c)), 0.0, 256.0); }
 vec3 bright(vec3 c) {
   float b = max(c.r, max(c.g, c.b));
   float soft = clamp(b - uThreshold + 0.5, 0.0, 1.0);

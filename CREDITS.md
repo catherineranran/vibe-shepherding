@@ -10,7 +10,7 @@ The commit history is kept as it was, except that `assets/sheep.pack` was remove
 - "Alpaca Animal" by Nyilonelycompany — https://www.cgtrader.com/3d-models/animal/mammal/alpaca-animal (bought by the site owner).
 - License: **CGTrader Royalty Free License**. The model may be used in this site but **its files may not be redistributed**, so the repository only holds an
   encrypted package: `tools/prepare-alpaca.mjs` bakes three static poses from the model's skeleton (standing, head low, eating), recolours the fur
-  to white, drops the skin and animations, keeps the colour, normal and roughness maps at 2K, and encrypts the result with AES-256-GCM into
+  to white, drops the skin and animations, keeps the colour and normal maps at 1K, and encrypts the result with AES-256-GCM into
   `assets/alpaca.pack` (key in `src/alpacaKey.js`); the page decrypts it with WebCrypto and loads it in memory. The original `Alpaca_2.glb`
   stays in `models/alpaca/`, which is git-ignored, and must not be uploaded anywhere public.
 - Each alpaca gets a coat colour at runtime: about four in five are white variants, one in five a warm macaron colour (pinks, peaches, apricots, butter yellows) from a 72-colour palette.
